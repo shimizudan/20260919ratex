@@ -46,7 +46,7 @@ demo/
     fix_truetype.py    途中版（TrueType に直すだけ。pdf.js では漢字が出ない）
     long.tex           サンプルの長文（3 ページ）
     long_final.pdf     生成結果
-  bench/             ビルド時間の比較（Typst / LuaLaTeX / XeLaTeX / upLaTeX）
+  bench/             ビルド時間の比較（Typst / LuaLaTeX / XeLaTeX / upLaTeX）と、グラフ作成（plot.py）
 ```
 
 ## 再現手順
