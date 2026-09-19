@@ -1,0 +1,115 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{CJKutf8}
+\pdfmapfile{+udmj.map}
+\pdfmapfile{+udgj.map}
+\newcommand{\goth}[1]{{\CJKfamily{goth}#1}}
+\renewcommand{\abstractname}{\goth{概要}}
+\renewcommand{\contentsname}{\goth{目次}}
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\figurename}{図}
+\renewcommand{\tablename}{表}
+\renewcommand{\refname}{\goth{参考文献}}
+\renewcommand{\today}{2026年9月19日}
+\begin{document}
+\begin{CJK}{UTF8}{min}
+\title{\goth{Rust製TeX「ratex」で日本語PDFを作る}}
+\author{\goth{清水 但}}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+Rust で書かれた TeX エンジン ratex を使い、日本語を含む PDF を生成できるか検証した。
+標準の状態では日本語の字形データが PDF に埋め込まれず、文字化けする。
+本稿では、IPAex フォントをサブフォントに分割して渡し、生成後の PDF を後処理することで、
+主要なビューアで日本語が正しく表示されることを示す。
+\end{abstract}
+
+\tableofcontents
+
+\section{\goth{はじめに}}
+TeX は数式を美しく組版できるため、論文や教材の作成で広く使われている。
+一方で、日本語の文書を作るには、pTeX や LuaTeX-ja など専用のエンジンや大きな配布物（TeX Live）が必要になる。
+ratex は、これらを単一のバイナリにまとめた新しい TeX エンジンであり、コンパイルが極めて高速だと報告されている。
+
+本稿の目的は次の三つである。
+\begin{itemize}
+  \item ratex で日本語を含む文書をコンパイルできるかを確かめる。
+  \item 表示されない場合の原因を特定する。
+  \item 実用的な回避策を示し、その限界を整理する。
+\end{itemize}
+
+\section{\goth{検証の方法}}
+\subsection{\goth{環境}}
+検証は macOS 上で行った。ratex はソースからビルドし、フォントには IPAex 明朝と IPAex ゴシックを用いた。
+文書は \texttt{CJKutf8} パッケージで組み、生成した PDF を四種類のビューアで確認した。
+
+\subsection{\goth{フォントの渡し方}}
+pdfTeX 系のエンジンは 8 ビットのフォントしか扱えないため、六千を超える漢字を含む日本語フォントは、
+二百五十六文字ずつのサブフォントに分割して扱う。分割後のフォントは、次の対応で PDF に埋め込まれる。
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\hline
+\textbf{Unicode の範囲} & 内容 & サブフォント \\
+\hline
+U+3000--30FF & 約物・かな & udmj30 \\
+U+4E00--9FFF & 漢字 & udmj4e--9f \\
+U+FF00--FFEF & 全角形 & udmjff \\
+\hline
+\end{tabular}
+\caption{サブフォントの分割（明朝体）}
+\end{table}
+
+\section{\goth{結果}}
+\subsection{\goth{ビューアごとの表示}}
+何も対策しない場合、フォントは PDF に埋め込まれず、どのビューアでも文字化けする。
+フォントを渡しただけの PDF は poppler では表示できたが、macOS のプレビューでは表示できなかった。
+これは ratex が TrueType フォントを Type1 として書き出しているためである。
+
+さらに pdf.js では、ひらがなとカタカナは表示されるものの、漢字だけが表示されなかった。
+そこで、フォントを Type0 の CIDFontType2 に作り直す後処理を加えたところ、すべてのビューアで正しく表示された。
+
+\subsection{\goth{ファイルサイズ}}
+IPAex 明朝はおよそ六メガバイトあり、全体を埋め込むと一行の文章でも PDF が大きくなる。
+使用した文字だけを取り出すサブセット化を行うことで、サイズは十数キロバイトまで縮んだ。
+
+\section{\goth{数式との共存}}
+日本語の文章の中でも、数式は ratex 本来の品質で組まれる。たとえば、正規分布の確率密度関数は
+\begin{equation}
+  f(x) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\!\left( -\frac{(x-\mu)^2}{2\sigma^2} \right)
+\end{equation}
+と書ける。ここで $\mu$ は平均、$\sigma^2$ は分散である。また、ガウス積分
+\begin{equation}
+  \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+\end{equation}
+は、式 (1) の正規化に使われる。行列を用いた例として、次の連立方程式を考える。
+\begin{align}
+  \begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}
+  \begin{pmatrix} x \\ y \end{pmatrix}
+  &=
+  \begin{pmatrix} 5 \\ 10 \end{pmatrix}.
+\end{align}
+
+\section{\goth{考察}}
+今回の方法には、次のような限界がある。
+\begin{enumerate}
+  \item 生成のたびに、PDF の後処理が必要になる。
+  \item 禁則処理や約物の詰めは、\texttt{CJK} パッケージの範囲に限られる。
+  \item 和田研フォント用の文字幅表を使うため、そこにない文字は表示できない場合がある。
+\end{enumerate}
+ratex 自身が TrueType を正しく埋め込み、日本語の組版パッケージに対応すれば、
+これらの手間は不要になるはずである。今後の開発に期待したい。
+
+\section{\goth{おわりに}}
+ratex は英語と数式の文書では高速で高品質だが、日本語には現時点で追加の作業が必要である。
+それでも、字形データを自分で用意することで、日本語を含む PDF を生成できることを確認した。
+
+\begin{thebibliography}{9}
+\bibitem{ratex} leoliu0, \textit{ratex: a pure-Rust TeX engine}, GitHub.
+\bibitem{ipaex} 一般財団法人 文字情報技術促進協議会, \textit{IPAex フォント}.
+\end{thebibliography}
+\end{CJK}
+\end{document}

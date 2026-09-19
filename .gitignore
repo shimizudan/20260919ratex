@@ -1,0 +1,26 @@
+# ratex 本体（別リポジトリ。README の手順で取得する）
+/src/
+
+# フォント（再配布せず、setup.sh で取得する）
+*.ttf
+*.pfb
+
+# 生成物
+*.enc
+demo/ja-font/*.map
+demo/ja-font/build/
+*.pdf
+!demo/ja-font/long_final.pdf
+!demo/hello.pdf
+!demo/ja.pdf
+
+# TeX / macOS
+*.aux
+*.log
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+*.dvi
+.DS_Store
