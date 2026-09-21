@@ -18,8 +18,10 @@ BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e6e5e0"
 group = lambda k: BLUE if k.startswith("ratex") else ORANGE if k == "Typst" else AQUA
 label = {
-    "ratex + 後処理 (IPAex全体)": "ratex + 後処理\n(TTF 全体)",
-    "ratex + 後処理 (TTFを事前サブセット)": "ratex + 後処理\n(TTF をサブセット化)",
+    "ratex + 後処理 (IPAex全体)": "ratex v0.3.0 + 後処理\n(TTF 全体)",
+    "ratex + 後処理 (TTFを事前サブセット)": "ratex v0.3.0 + 後処理\n(TTF をサブセット化)",
+    "ratex v0.4.0 (CJKutf8)": "ratex v0.4.0\n(CJKutf8)",
+    "ratex v0.4.0 (xeCJK)": "ratex v0.4.0\n(xeCJK)",
     "Typst": "Typst",
     "LuaLaTeX (luatexja)": "LuaLaTeX\n(luatexja)",
     "XeLaTeX (xeCJK)": "XeLaTeX\n(xeCJK)",

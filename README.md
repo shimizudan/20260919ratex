@@ -1,43 +1,57 @@
 # ratex で日本語 PDF を作る
 
-Rust 製の TeX エンジン [ratex](https://github.com/leoliu0/ratex)（v0.3.0）で日本語を含む PDF を生成する検証と、
-Typst・通常の TeX とのビルド時間の比較です（2026-09-19 時点、macOS）。
+Rust 製の TeX エンジン [ratex](https://github.com/leoliu0/ratex) で日本語を含む PDF を生成する検証と、
+Typst・通常の TeX とのビルド時間の比較です（macOS）。
+v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/ratex/issues/4) の対応後の v0.4.0 での再検証（2026-09-21）があります。
 
 ## 結論
 
 - ratex は英語と数式なら、そのままで動く。
-- **日本語は、そのままでは文字化けする。** 日本語フォントの字形（TTF など）がバンドルに入っておらず、PDF に埋め込まれない。
-- 次の 3 つの対処で、pdf.js（VSCode）、macOS プレビュー、poppler で日本語が表示できた。
+- **v0.4.0 では、fontspec + xeCJK で日本語 PDF が後処理なしで作れる。** CJK フォントが同梱され、`fontspec` / `xeCJK` が本物のフォントを選ぶようになった（issue #4 の対応）。`\setCJKmainfont{IPAexMincho}` などで指定したフォントが CID TrueType で埋め込まれる。システムフォントも、フォントファイルの用意も不要。3 ページの長文（数式・表・目次・参考文献つき）も約 0.7 秒で、化けなかった（[demo/ratex-v040/](demo/ratex-v040/)）。
+- **CJKutf8 は、短い文書なら表示できるが、長文では英字・数字・数式が化ける（v0.4.0 のバグ）。** 日本語の字形は同梱の和田研フォントで正しく出るが、同じフォント（CMR10 など）に、コードの割り当てが食い違う 2 つの版ができ、英字や数字が欠けたり重なったりする。`enumerate` の番号、ページ番号、目次、式番号などが引き金で、文書の書き方では避けられなかった。最小の再現例は [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex)（6 行）。長文で使うなら xeCJK を使う。
+- ただし ratex はフォントを代替しない。**要求した太字・斜体がフォントになければエラーになる。** IPAex には Bold がないため、見出しなどで太字を使う文書は IPAex では通らない（Harano Aji なら通る）。日本語への `\textit` もエラーになる。
+- **v0.3.0 では、日本語はそのままでは文字化けした。** 字形が PDF に埋め込まれず、ratex は TrueType を Type1 として書き出していた。次の 3 つの回避策で表示できた（v0.4.0 では不要。[demo/ja-font/](demo/ja-font/) に残してある）。
   1. IPAex フォントを 256 文字ずつのサブフォントに分けて、ratex に渡す（[gen_subfonts.py](demo/ja-font/gen_subfonts.py)）。
-  2. ratex は TrueType を Type1 として書き出してしまうため、出力 PDF のフォントを Type0/CID に作り直し、使用文字だけにサブセット化する（[fix_cjk.py](demo/ja-font/fix_cjk.py)）。
-  3. ratex は TTF 全体を読むと極端に遅くなるので、事前に使用文字だけの TTF にする（[subset_fonts.py](demo/ja-font/subset_fonts.py)）。
+  2. 出力 PDF のフォントを Type0/CID に作り直し、使用文字だけにサブセット化する（[fix_cjk.py](demo/ja-font/fix_cjk.py)）。
+  3. TTF 全体を読むと極端に遅くなるので、事前に使用文字だけの TTF にする（[subset_fonts.py](demo/ja-font/subset_fonts.py)）。
 
 ## ビルド時間の比較
 
-同じ 3 ページの日本語文書（見出し・数式・表・箇条書き）を、同じ IPAex フォントでビルドした中央値です。
+同じ 3 ページの日本語文書（見出し・数式・表・箇条書き）をビルドした中央値です。
 
 | 構成 | クリーンビルド | 1 文字編集後の再ビルド |
 |---|---|---|
 | Typst | 0.18 秒 | 0.18 秒 |
-| upLaTeX + dvipdfmx | 1.6 秒 | 1.0 秒 |
-| ratex + 後処理（TTF を事前サブセット） | 1.4 秒 | 0.8 秒 |
+| **ratex v0.4.0（xeCJK、後処理なし）** | 0.88 秒 | 0.32 秒 |
+| ratex v0.4.0（CJKutf8、後処理なし。※英字・数字・数式が化ける） | 1.06 秒 | 0.38 秒 |
+| upLaTeX + dvipdfmx | 1.5 秒 | 1.0 秒 |
 | XeLaTeX（xeCJK） | 2.3 秒 | 1.2 秒 |
 | LuaLaTeX（luatexja） | 6.4 秒 | 2.2 秒 |
-| ratex + 後処理（IPAex 全体の TTF） | 16.3 秒 | 6.0 秒 |
+| ratex v0.3.0 + 後処理（TTF を事前サブセット） | 1.4 秒 | 0.8 秒 |
+| ratex v0.3.0 + 後処理（IPAex 全体の TTF） | 16.3 秒 | 6.0 秒 |
 
-- 各 10 回（IPAex 全体の ratex のみ 3 回）。生データは [bench_result.json](demo/bench/bench_result.json)。
+- 各 10 回（v0.3.0 の IPAex 全体のみ 3 回）。生データは [bench_result.json](demo/bench/bench_result.json)。
+- v0.4.0 と Typst、TeX 系は 2026-09-21 に同じ環境で測り直した。v0.3.0 の 2 行は、古いバイナリがないため 2026-09-19 の測定値をそのまま載せている。
+- フォントは同じではない。Typst と TeX 系は IPAex、ratex v0.4.0 の xeCJK は Harano Aji（IPAex は Bold がなく、見出しで通らないため）、CJKutf8 は同梱の和田研フォント。
 - Typst は英数字にも IPAex を使う。TeX 系は Computer Modern を使うため、組版の細部は同じではない。
-- ratex は、フォントのサブセット化（前処理）を測定に含めていない。
+- v0.3.0 の測定は、フォントのサブセット化（前処理）を含めていない。v0.4.0 は前処理も後処理もない。
+- ratex v0.4.0 は、TeX 系の中では最も速い（クリーンで upLaTeX の約 1.4〜1.7 倍、LuaLaTeX の約 6〜7 倍）。Typst には及ばない。
 
 ## 構成
 
 ```
 demo/
   hello.tex          英語 + 数式（ratex でそのまま動く）
-  ja.tex             日本語の最小例（CJKutf8 のみ。文字化けする例）
+  ja.tex             日本語の最小例（CJKutf8 のみ。v0.3.0 では文字化けする例）
   lang/              中国語・フランス語など他言語の試行
   fonttest/          Latin Modern の .pfb を置くと埋め込まれることの確認
-  ja-font/           日本語対応（本体）
+  ratex-v040/        v0.4.0 での再検証（後処理なし）
+    cjkutf8.tex        日本語の最小例（CJKutf8。短文なら表示できる）
+    xecjk.tex          fontspec + xeCJK（IPAexMincho / IPAexGothic）
+    long_cjkutf8.tex   長文（3 ページ、CJKutf8。英字・数字・数式が化ける）
+    long_xecjk_harano.tex  長文（3 ページ、xeCJK + Harano Aji。化けない）
+    repro_cjkutf8_enum.tex  CJKutf8 の化けの最小再現例（6 行）
+  ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
     build.sh           ratex でビルド → PDF のフォントを作り直す
     gen_subfonts.py    TTF -> 256 文字ごとの enc / map
@@ -53,14 +67,24 @@ demo/
 
 ### 1. ratex をビルドする
 
-Rust 1.89 以上が必要です。
+Rust 1.89 以上が必要です。v0.4.0 はフォントを同梱するため、ソースが大きく、ビルドに約 23 分（バイナリ約 445MB）かかりました。
 
 ```sh
-git clone --depth 1 https://github.com/leoliu0/ratex.git src
-(cd src && cargo build --release)      # 約 7 分
+git clone https://github.com/leoliu0/ratex.git src
+(cd src && git checkout v0.4.0 && cargo build --release)
 ```
 
-### 2. 日本語 PDF を作る
+### 2. 日本語 PDF を作る（v0.4.0）
+
+```sh
+cd demo/ratex-v040
+../../src/target/release/ratex xecjk.tex          # fontspec + xeCJK
+../../src/target/release/ratex long_xecjk_harano.tex   # 長文（xeCJK）
+```
+
+### 2'. 日本語 PDF を作る（v0.3.0 用の回避策）
+
+v0.3.0 のバイナリ（`git checkout v0.3.0`）が必要です。
 
 ```sh
 pip install -r requirements.txt
@@ -81,12 +105,30 @@ cd demo/bench
 python3 bench.py 10
 ```
 
+## 参考: 別実装の rtex（yingkitw）
+
+名前が似ている [yingkitw/rtex](https://github.com/yingkitw/rtex)（v0.1.11、pdfrs エンジン）も試した。
+TeX エンジンではなく、LaTeX のサブセットを解釈して PDF / HTML / DOCX / EPUB に変換するツールで、
+Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。ファイルは [demo/rtex-yingkitw/](demo/rtex-yingkitw/)。
+
+- **日本語は後処理なしで表示できる。** CJKutf8 もフォント指定も不要で、macOS では [ja_min.tex](demo/rtex-yingkitw/ja_min.tex) がそのまま読める PDF になった（CID TrueType を埋め込み）。
+- ビルドは同じ 3 ページの文書で 約 0.02 秒（10 回の中央値。クリーン・1 文字編集後とも）。Typst（0.18 秒）より約 9 倍速い。ただし TeX の組版はしていないので、単純比較はできない。
+- **組版の品質は TeX に遠く及ばない。** [rt.pdf](demo/rtex-yingkitw/rt.pdf) では次の問題があった。
+  - 用紙が Letter 固定（`geometry` が効かない）。
+  - 行内数式 `$...$` が独立したブロックになり、文が途中で切れる。連立方程式（行列）も縦に崩れる。
+  - `\textbf` などが表のセル内で展開されない。`\bibliography` が壊れる。
+  - 禁則処理・約物の詰めなし。和文の行末で不自然に改行される。
+- 用途は、簡単なメモや CI での変換。日本語の論文・教材には向かない。
+- 検証は macOS のみ。日本語のグリフをどこから取っているかは未確認（PDF の中身は 1 つの TrueType）。
+
 ## 制限
 
-- 検証は ratex v0.3.0、macOS のみ。
-- 禁則処理や約物の詰めは `CJK` パッケージの範囲に限られる。
-- 幅の情報は和田研フォント用の TFM を使うため、そこにない文字は出ないことがある。
-- 太字の日本語は未確認。
+- 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー。pdf.js は未確認。
+- LuaTeX / luatexja と OpenType MATH は未対応（issue #4 より）。
+- CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
+- 要求した太字・斜体がフォントになければエラーになる（IPAex は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。
+- CJKutf8 の禁則処理や約物の詰めは `CJK` パッケージの範囲に限られる。
+- v0.3.0 では、幅の情報が和田研フォント用の TFM のため、そこにない文字は出ないことがあった。
 
 ## ライセンス・フォント
 

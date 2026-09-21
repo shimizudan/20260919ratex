@@ -13,6 +13,8 @@ demo/ja-font/build/
 !demo/ja-font/long_final.pdf
 !demo/hello.pdf
 !demo/ja.pdf
+!demo/ratex-v040/*.pdf
+!demo/rtex-yingkitw/rt.pdf
 
 # TeX / macOS
 *.aux

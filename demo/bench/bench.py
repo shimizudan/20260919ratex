@@ -99,6 +99,20 @@ class Ratex(Tool):
         return b + f
 
 
+class RatexNative(Tool):
+    """ratex v0.4.0。後処理なしで、そのままビルドする"""
+
+    def __init__(self, name, source):
+        self.name, self.source = name, source
+
+    def clean(self, d):
+        shutil.rmtree(Path.home() / "Library/Caches/tex-rs/texmk/jobs", ignore_errors=True)
+        (d / Path(self.source).with_suffix(".pdf")).unlink(missing_ok=True)
+
+    def build(self, d):
+        return timed([str(RATEX), self.source], d)
+
+
 class Latexmk(Tool):
     def __init__(self, name, source, args):
         self.name, self.source, self.args = name, source, args
@@ -118,17 +132,19 @@ def main():
     ratex_files = ["../ja-font/long.tex", "../ja-font/fix_cjk.py", "../ja-font/ipaexm.ttf", "../ja-font/ipaexg.ttf",
                  "../ja-font/udmj.map", "../ja-font/udgj.map"] + [str(p) for p in (ROOT / "demo/ja-font").glob("ud*.enc")]
     tools = [
-        (Ratex("ratex + 後処理 (IPAex全体)", sub=False, n=3), ratex_files),
-        (Ratex("ratex + 後処理 (TTFを事前サブセット)", sub=True), ratex_files),
+        (RatexNative("ratex v0.4.0 (CJKutf8)", "long_cjkutf8.tex"), ["../ratex-v040/long_cjkutf8.tex"]),
+        (RatexNative("ratex v0.4.0 (xeCJK)", "long_xecjk_harano.tex"), ["../ratex-v040/long_xecjk_harano.tex"]),
         (Typst(), ["long.typ", "../ja-font/ipaexm.ttf", "../ja-font/ipaexg.ttf"]),
         (Latexmk("LuaLaTeX (luatexja)", "lua.tex", ["-lualatex"]), ["lua.tex", "body.tex"]),
         (Latexmk("XeLaTeX (xeCJK)", "xe.tex", ["-xelatex"]), ["xe.tex", "body.tex"]),
         (Latexmk("upLaTeX + dvipdfmx", "up.tex", ["-pdfdvi", "-latex=uplatex", "-e", "$dvipdf=q/dvipdfmx %O -o %D %S/"]), ["up.tex", "body.tex"]),
     ]
     shutil.rmtree(WORK, ignore_errors=True)
-    results = {}
+    # v0.3.0 の測定値 (後処理つき) は、古いバイナリがないので既存の JSON から引き継ぐ
+    old = HERE / "bench_result.json"
+    results = {k: v for k, v in json.loads(old.read_text()).items() if k.startswith("ratex + 後処理")} if old.exists() else {}
     for tool, files in tools:
-        d = WORK / str(len(results))
+        d = WORK / tool.name.replace(" ", "_").replace("/", "_")
         d.mkdir(parents=True, exist_ok=True)
         for f in files:
             src = (HERE / f).resolve()

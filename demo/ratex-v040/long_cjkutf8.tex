@@ -1,4 +1,17 @@
-
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{CJKutf8}
+\newcommand{\goth}[1]{{\CJKfamily{goth}#1}}
+\renewcommand{\abstractname}{\goth{概要}}
+\renewcommand{\contentsname}{\goth{目次}}
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\figurename}{図}
+\renewcommand{\tablename}{表}
+\renewcommand{\refname}{\goth{参考文献}}
+\renewcommand{\today}{2026年9月19日}
+\begin{document}
+\begin{CJK}{UTF8}{min}
 \title{\goth{Rust製TeX「ratex」で日本語PDFを作る}}
 \author{\goth{清水 団}}
 \date{\today}
@@ -96,3 +109,5 @@ ratex は英語と数式の文書では高速で高品質だが、日本語に�
 \bibitem{ratex} leoliu0, \textit{ratex: a pure-Rust TeX engine}, GitHub.
 \bibitem{ipaex} 一般財団法人 文字情報技術促進協議会, \textit{IPAex フォント}.
 \end{thebibliography}
+\end{CJK}
+\end{document}

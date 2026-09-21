@@ -1,0 +1,11 @@
+% ratex v0.4.0: CJKutf8 の環境内で、enumerate の番号と本文の英字が同じフォントを使うと、
+% 英字が化ける（同じ CMR10 の中で、番号はコード 1,2、本文は ASCII のコードになり、対応が食い違う）。
+\documentclass{article}
+\usepackage{CJKutf8}
+\begin{document}
+\begin{CJK}{UTF8}{min}
+\begin{enumerate}
+  \item 日本語 ratex です。
+\end{enumerate}
+\end{CJK}
+\end{document}

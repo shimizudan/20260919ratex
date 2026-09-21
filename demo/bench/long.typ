@@ -11,7 +11,7 @@
 #align(center)[
   #text(size: 17pt, font: "IPAexGothic")[Rust製TeX「ratex」で日本語PDFを作る]
   #v(0.6em)
-  #text(size: 12pt, font: "IPAexGothic")[清水 但]
+  #text(size: 12pt, font: "IPAexGothic")[清水 団]
   #v(0.4em)
   2026年9月19日
 ]
