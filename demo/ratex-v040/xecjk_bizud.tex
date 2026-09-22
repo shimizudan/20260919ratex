@@ -1,0 +1,15 @@
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{Latin Modern Roman}
+\setCJKmainfont{BIZ-UDMinchoM}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=0]
+\setCJKsansfont{BIZ-UDGothicR}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=0,BoldFont=BIZ-UDGothicB]
+\begin{document}
+Roman text, \textbf{bold}, \textit{italic}, and 日本語のテスト：BIZ UDフォントでPDFを作成します。
+
+{\sffamily ゴシック体のテスト。漢字、ひらがな、カタカナ。}
+
+{\sffamily\bfseries 太字ゴシックのテスト。}
+
+$E=mc^2$ 数式と日本語の混在。
+\end{document}

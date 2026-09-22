@@ -5,6 +5,9 @@
 *.ttf
 *.pfb
 
+# ヒラギノから fontTools で抜き出したフォント実体（README の手順で再生成する）
+demo/ratex-v040/hirafonts/
+
 # 生成物
 *.enc
 demo/ja-font/*.map

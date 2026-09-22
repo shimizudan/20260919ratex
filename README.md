@@ -10,6 +10,8 @@ v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/r
 - **v0.4.0 では、fontspec + xeCJK で日本語 PDF が後処理なしで作れる。** CJK フォントが同梱され、`fontspec` / `xeCJK` が本物のフォントを選ぶようになった（issue #4 の対応）。`\setCJKmainfont{IPAexMincho}` などで指定したフォントが CID TrueType で埋め込まれる。システムフォントも、フォントファイルの用意も不要。3 ページの長文（数式・表・目次・参考文献つき）も約 0.7 秒で、化けなかった（[demo/ratex-v040/](demo/ratex-v040/)）。
 - **CJKutf8 は、短い文書なら表示できるが、長文では英字・数字・数式が化ける（v0.4.0 のバグ）。** 日本語の字形は同梱の和田研フォントで正しく出るが、同じフォント（CMR10 など）に、コードの割り当てが食い違う 2 つの版ができ、英字や数字が欠けたり重なったりする。`enumerate` の番号、ページ番号、目次、式番号などが引き金で、文書の書き方では避けられなかった。最小の再現例は [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex)（6 行）。長文で使うなら xeCJK を使う。
 - ただし ratex はフォントを代替しない。**要求した太字・斜体がフォントになければエラーになる。** IPAex には Bold がないため、見出しなどで太字を使う文書は IPAex では通らない（Harano Aji なら通る）。日本語への `\textit` もエラーになる。
+- **macOS 同梱のヒラギノや、別途インストールした BIZ UD ゴシック/明朝も、実ファイルを直接指定すれば使える。** ratex は fontconfig のようなシステムフォント DB を持たないため、`\setCJKmainfont{ヒラギノ明朝 ProN}` のように名前だけ書いても見つからない。`Path=` / `Extension=` / `FontIndex=` オプションで実際のファイルを指す必要がある（[xecjk_hiragino.tex](demo/ratex-v040/xecjk_hiragino.tex)、[long_xecjk_hiragino.tex](demo/ratex-v040/long_xecjk_hiragino.tex)、[xecjk_bizud.tex](demo/ratex-v040/xecjk_bizud.tex)、[long_xecjk_bizud.tex](demo/ratex-v040/long_xecjk_bizud.tex)）。ヒラギノの標準フォント（ProN）は SIP 保護領域にあり `ls` では見えないため、`fc-list`（Homebrew の fontconfig）でパスを調べた。
+- **`BoldFont=` は、1 つの `.ttc` に複数ウェイトが同居していると選べない。** `BoldFont=` に渡した名前も、元の `Path`/`Extension`/`FontIndex` をそのまま引き継ぐため、Regular と Bold が別ファイルのフォント（BIZ UD ゴシックの `BIZ-UDGothicR.ttc` / `BIZ-UDGothicB.ttc` など）なら問題なく効くが、同じファイルの別面に Bold が入っているフォント（ヒラギノ明朝 ProN.ttc は面 0 が Regular、面 2 が Bold）では面を切り替えられない。回避策として、`fontTools` で該当面を単体ファイルに抜き出した（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)）。BIZ UD 明朝のように Bold 自体が存在しないフォントでは、IPAex と同じく和文を `\textbf` に含めるとエラーになる。
 - **v0.3.0 では、日本語はそのままでは文字化けした。** 字形が PDF に埋め込まれず、ratex は TrueType を Type1 として書き出していた。次の 3 つの回避策で表示できた（v0.4.0 では不要。[demo/ja-font/](demo/ja-font/) に残してある）。
   1. IPAex フォントを 256 文字ずつのサブフォントに分けて、ratex に渡す（[gen_subfonts.py](demo/ja-font/gen_subfonts.py)）。
   2. 出力 PDF のフォントを Type0/CID に作り直し、使用文字だけにサブセット化する（[fix_cjk.py](demo/ja-font/fix_cjk.py)）。
@@ -37,6 +39,19 @@ v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/r
 - v0.3.0 の測定は、フォントのサブセット化（前処理）を含めていない。v0.4.0 は前処理も後処理もない。
 - ratex v0.4.0 は、TeX 系の中では最も速い（クリーンで upLaTeX の約 1.4〜1.7 倍、LuaLaTeX の約 6〜7 倍）。Typst には及ばない。
 
+### 参考: ヒラギノ・BIZ UD との比較（簡易計測）
+
+同じ環境・同じ 3 ページの文書で、Harano Aji に加えてヒラギノ（ProN）・BIZ UD でもビルド時間を測った（2026-09-22、各 5 回の中央値）。上の表とは計測条件が異なる簡易チェックなので、別枠で載せる。
+
+| フォント | クリーンビルド | 1 文字編集後の再ビルド |
+|---|---|---|
+| Harano Aji | 0.99 秒 | 0.35 秒 |
+| ヒラギノ（ProN） | 1.10 秒 | 0.44 秒 |
+| BIZ UD | 0.86 秒 | 0.36 秒 |
+
+- クリーンビルドは `ratex -c` でキャッシュを消してから計測。再ビルドは末尾にコメント行を 1 行足して内容を変えてから計測。
+- 差はおおむねフォントファイルの読み込み時間。ヒラギノの明朝は、fontTools で抜き出した単体 OTF（Regular・Bold 合わせて約 19MB）を読むぶん、他より遅い。
+
 ## 構成
 
 ```
@@ -48,8 +63,13 @@ demo/
   ratex-v040/        v0.4.0 での再検証（後処理なし）
     cjkutf8.tex        日本語の最小例（CJKutf8。短文なら表示できる）
     xecjk.tex          fontspec + xeCJK（IPAexMincho / IPAexGothic）
+    xecjk_hiragino.tex   fontspec + xeCJK（システムのヒラギノ ProN。Path/Extension/FontIndex 指定）
+    xecjk_bizud.tex      fontspec + xeCJK（システムの BIZ UD ゴシック/明朝）
     long_cjkutf8.tex   長文（3 ページ、CJKutf8。英字・数字・数式が化ける）
     long_xecjk_harano.tex  長文（3 ページ、xeCJK + Harano Aji。化けない）
+    long_xecjk_hiragino.tex  長文（3 ページ、ヒラギノ。Bold 面を fontTools で単体ファイルに抜いて使用）
+    long_xecjk_bizud.tex     長文（3 ページ、BIZ UD。明朝に Bold がないため見出し表の和文を \textbf の外に出した）
+    hirafonts/           ヒラギノ明朝 ProN.ttc の面 0（Regular）・面 2（Bold）を fontTools で単体 OTF に抜いたもの
     repro_cjkutf8_enum.tex  CJKutf8 の化けの最小再現例（6 行）
   ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
@@ -80,6 +100,31 @@ git clone https://github.com/leoliu0/ratex.git src
 cd demo/ratex-v040
 ../../src/target/release/ratex xecjk.tex          # fontspec + xeCJK
 ../../src/target/release/ratex long_xecjk_harano.tex   # 長文（xeCJK）
+```
+
+### 2b. システムフォント（ヒラギノ / BIZ UD）で日本語 PDF を作る（v0.4.0）
+
+ratex は fontconfig のようなシステムフォント DB を持たないので、`\setCJKmainfont` に `Path=` / `Extension=` / `FontIndex=` を渡して実ファイルを直接指す（詳しくは上の「結論」参照）。BIZ UD ゴシック（`/Library/Fonts/BIZ-UDGothicR.ttc` など）が入っていれば、そのまま動く。
+
+```sh
+cd demo/ratex-v040
+../../src/target/release/ratex xecjk_bizud.tex
+../../src/target/release/ratex long_xecjk_bizud.tex
+```
+
+ヒラギノは、実ファイルが SIP 保護領域にあり `fc-list`（Homebrew の fontconfig）でパスを調べる必要があるのに加え、明朝の Bold が Regular と同じ `.ttc` の別面に入っているため、`fontTools` で面を単体ファイルに抜き出した（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)、リポジトリに同梱済み）。抜き出しをやり直す場合は次のようにする。
+
+```sh
+pip install -r requirements.txt
+python3 -c "
+from fontTools.ttLib import TTCollection
+src = TTCollection('/System/Library/Fonts/ヒラギノ明朝 ProN.ttc')
+src.fonts[0].save('demo/ratex-v040/hirafonts/HiraMinProN-Regular.otf')  # 面 0 = W3 (Regular)
+src.fonts[2].save('demo/ratex-v040/hirafonts/HiraMinProN-Bold.otf')     # 面 2 = W6 (Bold 相当)
+"
+cd demo/ratex-v040
+../../src/target/release/ratex xecjk_hiragino.tex
+../../src/target/release/ratex long_xecjk_hiragino.tex
 ```
 
 ### 2'. 日本語 PDF を作る（v0.3.0 用の回避策）
@@ -126,12 +171,14 @@ Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。フ�
 - 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー。pdf.js は未確認。
 - LuaTeX / luatexja と OpenType MATH は未対応（issue #4 より）。
 - CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
-- 要求した太字・斜体がフォントになければエラーになる（IPAex は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。
+- 要求した太字・斜体がフォントになければエラーになる（IPAex・BIZ UD 明朝は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。
+- `\setCJKmainfont` に `Path=`/`Extension=`/`FontIndex=` で外部フォントを直接指すとき、システムフォントは fontconfig のようなフォント DB を検索しないため、名前だけでは見つからない。`BoldFont=` に渡す名前も同じ `Path`/`Extension`/`FontIndex` を引き継ぐため、Regular と Bold が同じ `.ttc` の別面にあるフォント（ヒラギノ明朝など）では選べない。単体ファイルに面を抜き出す必要がある（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)）。
 - CJKutf8 の禁則処理や約物の詰めは `CJK` パッケージの範囲に限られる。
 - v0.3.0 では、幅の情報が和田研フォント用の TFM のため、そこにない文字は出ないことがあった。
 
 ## ライセンス・フォント
 
 - IPAex フォントは [IPA フォントライセンス](https://moji.or.jp/ipafont/license/) です。このリポジトリには含めず、`setup.sh` で取得します。
+- ヒラギノは Apple 独自のライセンスのフォントです。このリポジトリには含めません。`demo/ratex-v040/hirafonts/` は `.gitignore` で除外しており、上の「2b」の `fontTools` コマンドで手元の macOS から都度抜き出します。BIZ UD はモリサワの [BIZ UDフォント](https://on-d.morisawa.co.jp/biz/) で無償配布されていますが、こちらもリポジトリには含めず、システムにインストールされたものを参照します。
 - このリポジトリのスクリプトは MIT ライセンスです（[LICENSE](LICENSE)）。
 - ratex は MIT または Apache-2.0 です。
