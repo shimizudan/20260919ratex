@@ -1,0 +1,14 @@
+% ratex v0.4.0: Apple Color Emoji をフォント指定すると、Missing glyph エラーは出ずに
+% ビルドが成功する（コードポイント→グリフID の対応は取れている）。
+% しかし出力 PDF には絵文字が一切描画されない（Poppler・macOS Quick Look の両方で確認）。
+% Apple Color Emoji の実体はグリフの色ビットマップを持つ sbix テーブルにあり、
+% 通常の輪郭を持つ glyf テーブル側は面積ゼロの退化した2点だけのダミー輪郭しか
+% 持っていない（fontTools で確認: xMin,yMin,xMax,yMax はあるが実質的な塗り領域がない）。
+% ratex は sbix を読まず glyf のダミー輪郭をそのまま埋め込むため、エラーにはならないが
+% 見た目には何も描かれない。
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{Apple Color Emoji}[Path=/System/Library/Fonts/,Extension=.ttc,FontIndex=0]
+\begin{document}
+😀🎉✅❌⭐👍😂🚀
+\end{document}

@@ -11,6 +11,8 @@ v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/r
 - **CJKutf8 は、短い文書なら表示できるが、長文では英字・数字・数式が化ける（v0.4.0 のバグ）。** 日本語の字形は同梱の和田研フォントで正しく出るが、同じフォント（CMR10 など）に、コードの割り当てが食い違う 2 つの版ができ、英字や数字が欠けたり重なったりする。`enumerate` の番号、ページ番号、目次、式番号などが引き金で、文書の書き方では避けられなかった。最小の再現例は [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex)（6 行）。長文で使うなら xeCJK を使う。
 - ただし ratex はフォントを代替しない。**要求した太字・斜体がフォントになければエラーになる。** IPAex には Bold がないため、見出しなどで太字を使う文書は IPAex では通らない（Harano Aji なら通る）。日本語への `\textit` もエラーになる。
 - **macOS 同梱のヒラギノや、別途インストールした BIZ UD ゴシック/明朝も、実ファイルを直接指定すれば使える。** ratex は fontconfig のようなシステムフォント DB を持たないため、`\setCJKmainfont{ヒラギノ明朝 ProN}` のように名前だけ書いても見つからない。`Path=` / `Extension=` / `FontIndex=` オプションで実際のファイルを指す必要がある（[xecjk_hiragino.tex](demo/ratex-v040/xecjk_hiragino.tex)、[long_xecjk_hiragino.tex](demo/ratex-v040/long_xecjk_hiragino.tex)、[xecjk_bizud.tex](demo/ratex-v040/xecjk_bizud.tex)、[long_xecjk_bizud.tex](demo/ratex-v040/long_xecjk_bizud.tex)）。ヒラギノの標準フォント（ProN）は SIP 保護領域にあり `ls` では見えないため、`fc-list`（Homebrew の fontconfig）でパスを調べた。
+- **丸数字（①②③）・ローマ数字（Ⅰ Ⅱ Ⅲ）・丸英字（Ⓐ Ⓑ Ⓒ）は、xeCJK では `\setCJKmainfont` に回らず `\setmainfont` 側で解決される。** ratex の CJK 判定（`is_cjk()`）は Enclosed CJK Letters and Months（㈠㈡㈢ など、U+3200-32FF）は対象に含むが、Enclosed Alphanumerics（①など、U+2460-24FF）と Number Forms（Ⅰなど、U+2150-218F）は対象外にしている。そのためこれらの文字は `\setCJKmainfont` ではなく地の `\setmainfont`（既定では Latin Modern Roman）に回され、そちらにグリフがなければ Missing glyph でビルドが止まる。HaranoAjiMincho・IPAexMincho はどちらもこれらのグリフを持たないため、xeCJK の既定設定では丸数字は使えない（[repro_enclosed_alnum.tex](demo/ratex-v040/repro_enclosed_alnum.tex)）。回避策は、`\setmainfont` にもこれらのグリフを持つフォント（ヒラギノなど）を指定すること。ヒラギノ明朝 ProN 自体にはグリフがあるため、`\setmainfont` と `\setCJKmainfont` の両方に指定すれば和文中に混在させても表示できる（[enclosed_alnum_hiragino.tex](demo/ratex-v040/enclosed_alnum_hiragino.tex)）。
+- **絵文字（😀🎉など）は、ビルドはエラーなく成功するが、PDF には何も描画されない。** Apple Color Emoji をフォント指定すると Missing glyph エラーは出ない（コードポイント→グリフ ID の対応は取れている）が、出力 PDF は Poppler・macOS Quick Look のどちらで見ても空白になる（[repro_emoji_blank.tex](demo/ratex-v040/repro_emoji_blank.tex)）。Apple Color Emoji の実体は色ビットマップを持つ `sbix` テーブルにあり、通常の輪郭を持つはずの `glyf` テーブル側は面積ゼロの退化した2点だけのダミー輪郭しか持たない（fontTools で確認）。ratex は `sbix` を読まず `glyf` のダミー輪郭をそのまま埋め込むため、エラーにはならないが見た目には何も残らない。なお色のない記号（☆★○●✓☺♪♥など）は、フォントに実体のある輪郭グリフとして入っていれば通常の文字と同様に表示できる。
 - **`BoldFont=` は、1 つの `.ttc` に複数ウェイトが同居していると選べない。** `BoldFont=` に渡した名前も、元の `Path`/`Extension`/`FontIndex` をそのまま引き継ぐため、Regular と Bold が別ファイルのフォント（BIZ UD ゴシックの `BIZ-UDGothicR.ttc` / `BIZ-UDGothicB.ttc` など）なら問題なく効くが、同じファイルの別面に Bold が入っているフォント（ヒラギノ明朝 ProN.ttc は面 0 が Regular、面 2 が Bold）では面を切り替えられない。回避策として、`fontTools` で該当面を単体ファイルに抜き出した（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)）。BIZ UD 明朝のように Bold 自体が存在しないフォントでは、IPAex と同じく和文を `\textbf` に含めるとエラーになる。
 - **v0.3.0 では、日本語はそのままでは文字化けした。** 字形が PDF に埋め込まれず、ratex は TrueType を Type1 として書き出していた。次の 3 つの回避策で表示できた（v0.4.0 では不要。[demo/ja-font/](demo/ja-font/) に残してある）。
   1. IPAex フォントを 256 文字ずつのサブフォントに分けて、ratex に渡す（[gen_subfonts.py](demo/ja-font/gen_subfonts.py)）。
@@ -71,6 +73,9 @@ demo/
     long_xecjk_bizud.tex     長文（3 ページ、BIZ UD。明朝に Bold がないため見出し表の和文を \textbf の外に出した）
     hirafonts/           ヒラギノ明朝 ProN.ttc の面 0（Regular）・面 2（Bold）を fontTools で単体 OTF に抜いたもの
     repro_cjkutf8_enum.tex  CJKutf8 の化けの最小再現例（6 行）
+    repro_enclosed_alnum.tex  丸数字・ローマ数字が xeCJK の CJK 判定に含まれず Missing glyph になる再現例
+    enclosed_alnum_hiragino.tex  上の回避策（\setmainfont にもヒラギノを指定）
+    repro_emoji_blank.tex  絵文字がエラーなくビルドされるが PDF には描画されない再現例
   ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
     build.sh           ratex でビルド → PDF のフォントを作り直す
@@ -171,6 +176,7 @@ Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。フ�
 - 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー。pdf.js は未確認。
 - LuaTeX / luatexja と OpenType MATH は未対応（issue #4 より）。
 - CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
+- 丸数字・ローマ数字・丸英字は xeCJK の CJK 判定に含まれず `\setmainfont` 側に回るため、そちらにグリフがないと Missing glyph になる（上の結論を参照）。絵文字はビルドはエラーにならないが、`sbix` 非対応のため PDF には描画されない（同）。ビルドが成功しても表示されない例があるため、ここでも描画した画像での確認が要る。
 - 要求した太字・斜体がフォントになければエラーになる（IPAex・BIZ UD 明朝は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。
 - `\setCJKmainfont` に `Path=`/`Extension=`/`FontIndex=` で外部フォントを直接指すとき、システムフォントは fontconfig のようなフォント DB を検索しないため、名前だけでは見つからない。`BoldFont=` に渡す名前も同じ `Path`/`Extension`/`FontIndex` を引き継ぐため、Regular と Bold が同じ `.ttc` の別面にあるフォント（ヒラギノ明朝など）では選べない。単体ファイルに面を抜き出す必要がある（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)）。
 - CJKutf8 の禁則処理や約物の詰めは `CJK` パッケージの範囲に限られる。

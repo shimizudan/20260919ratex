@@ -1,0 +1,14 @@
+% repro_enclosed_alnum.tex の回避策。丸数字・ローマ数字・囲み英字は ratex の CJK 判定に
+% 含まれないため \setCJKmainfont では解決されず、\setmainfont に回される。
+% そこで \setmainfont にもグリフを持つフォント（ここではヒラギノ明朝 ProN）を指定すると、
+% 和文と丸数字が混在する文章でも Missing glyph にならず表示できる。
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{ヒラギノ明朝 ProN}[Path=/System/Library/Fonts/,Extension=.ttc,FontIndex=0]
+\setCJKmainfont{ヒラギノ明朝 ProN}[Path=/System/Library/Fonts/,Extension=.ttc,FontIndex=0]
+\begin{document}
+日本語の文章の中で丸数字①②③を使う場合のテスト。項目は①番目、②番目、③番目です。
+
+丸数字：①②③④⑤⑥⑦⑧⑨⑩⑳　ローマ数字：ⅠⅡⅢⅣⅤ　丸英字：Ⓐ Ⓑ Ⓒ
+\end{document}

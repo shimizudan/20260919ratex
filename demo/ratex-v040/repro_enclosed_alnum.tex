@@ -1,0 +1,17 @@
+% ratex v0.4.0: xeCJK 環境で丸数字（①など、Enclosed Alphanumerics U+2460-24FF）や
+% ローマ数字（Ⅰなど、Number Forms U+2150-218F）を使うと Missing glyph エラーになる。
+% ratex の CJK 判定（crates/tex-core/src/native_layout.rs の is_cjk()）が
+% この 2 つの Unicode ブロックを CJK と認識しないため、\setCJKmainfont ではなく
+% \setmainfont（ここでは Latin Modern Roman）に回され、そちらにグリフがなくて落ちる。
+% 同じ Enclosed でも、Enclosed CJK Letters and Months（㈠など、U+3200-32FF）は
+% is_cjk() の対象に含まれており、\setCJKmainfont 側で解決されて問題なく通る。
+\documentclass{article}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{Latin Modern Roman}
+\setCJKmainfont{HaranoAjiMincho}
+\begin{document}
+丸数字：①②③
+
+囲みCJK文字：㈠㈡㈢
+\end{document}
