@@ -22,6 +22,8 @@ label = {
     "ratex + 後処理 (TTFを事前サブセット)": "ratex v0.3.0 + 後処理\n(TTF をサブセット化)",
     "ratex v0.4.0 (CJKutf8)": "ratex v0.4.0\n(CJKutf8)",
     "ratex v0.4.0 (xeCJK)": "ratex v0.4.0\n(xeCJK)",
+    "ratex v0.4.4 (CJKutf8)": "ratex v0.4.4\n(CJKutf8)",
+    "ratex v0.4.4 (xeCJK)": "ratex v0.4.4\n(xeCJK)",
     "Typst": "Typst",
     "LuaLaTeX (luatexja)": "LuaLaTeX\n(luatexja)",
     "XeLaTeX (xeCJK)": "XeLaTeX\n(xeCJK)",

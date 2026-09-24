@@ -2,13 +2,15 @@
 
 Rust 製の TeX エンジン [ratex](https://github.com/leoliu0/ratex) で日本語を含む PDF を生成する検証と、
 Typst・通常の TeX とのビルド時間の比較です（macOS）。
-v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/ratex/issues/4) の対応後の v0.4.0 での再検証（2026-09-21）があります。
+v0.3.0 での検証（2026-09-19）、issue [#4](https://github.com/leoliu0/ratex/issues/4) の対応後の v0.4.0 での再検証（2026-09-21）、v0.4.4 での再確認（2026-09-24）があります。
 
 ## 結論
 
+- **v0.4.4（2026-09-24 確認）では、v0.4.0 の CJKutf8 の化けが直った。** [long_cjkutf8.tex](demo/ratex-v040/long_cjkutf8.tex)（3 ページ、目次・数式・表つき）も [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex) も、英字・数字・数式が正しく出る（出力は [demo/ratex-v044/](demo/ratex-v044/)）。一方、下に書いた v0.4.0 のほかの制限（太字・斜体がないとエラー、同じ `.ttc` の別面を `BoldFont=` で選べない、丸数字が Missing glyph、絵文字フォントが描画されない）は、v0.4.4 でも同じだった。ビルドは v0.4.0 より遅くなった（下の表）。
+- **v0.4.4 では、bxjsarticle（`pdflatex,ja=standard`）で日本語 PDF がそのまま作れる。** zr-tex8r さんのサンプル [ratex-ja-example.tex](demo/ratex-v044/ratex-ja-example.tex)（[gist](https://gist.github.com/zr-tex8r/ae14db01f5325ba47c7d6ad41fa58f02)）が、エラー・警告なしで 1 ページの PDF になった（[ratex-ja-example.pdf](demo/ratex-v044/ratex-ja-example.pdf)）。和文は同梱の和田研フォント（明朝・ゴシック）、`cases` と `\dfrac` の数式、`\text{}` 内の和文も正しく出る。**`twemojis` パッケージの絵文字（🙃☃💁）も描画される。** フォントではなく画像として貼るため、下の Apple Color Emoji の問題にはかからない。
 - ratex は英語と数式なら、そのままで動く。
 - **v0.4.0 では、fontspec + xeCJK で日本語 PDF が後処理なしで作れる。** CJK フォントが同梱され、`fontspec` / `xeCJK` が本物のフォントを選ぶようになった（issue #4 の対応）。`\setCJKmainfont{IPAexMincho}` などで指定したフォントが CID TrueType で埋め込まれる。システムフォントも、フォントファイルの用意も不要。3 ページの長文（数式・表・目次・参考文献つき）も約 0.7 秒で、化けなかった（[demo/ratex-v040/](demo/ratex-v040/)）。
-- **CJKutf8 は、短い文書なら表示できるが、長文では英字・数字・数式が化ける（v0.4.0 のバグ）。** 日本語の字形は同梱の和田研フォントで正しく出るが、同じフォント（CMR10 など）に、コードの割り当てが食い違う 2 つの版ができ、英字や数字が欠けたり重なったりする。`enumerate` の番号、ページ番号、目次、式番号などが引き金で、文書の書き方では避けられなかった。最小の再現例は [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex)（6 行）。長文で使うなら xeCJK を使う。
+- **v0.4.0 の CJKutf8 は、短い文書なら表示できるが、長文では英字・数字・数式が化ける（v0.4.0 のバグ。v0.4.4 で修正済み）。** 日本語の字形は同梱の和田研フォントで正しく出るが、同じフォント（CMR10 など）に、コードの割り当てが食い違う 2 つの版ができ、英字や数字が欠けたり重なったりする。`enumerate` の番号、ページ番号、目次、式番号などが引き金で、文書の書き方では避けられなかった。最小の再現例は [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex)（6 行）。v0.4.0 の長文で使うなら xeCJK を使う。
 - ただし ratex はフォントを代替しない。**要求した太字・斜体がフォントになければエラーになる。** IPAex には Bold がないため、見出しなどで太字を使う文書は IPAex では通らない（Harano Aji なら通る）。日本語への `\textit` もエラーになる。
 - **macOS 同梱のヒラギノや、別途インストールした BIZ UD ゴシック/明朝も、実ファイルを直接指定すれば使える。** ratex は fontconfig のようなシステムフォント DB を持たないため、`\setCJKmainfont{ヒラギノ明朝 ProN}` のように名前だけ書いても見つからない。`Path=` / `Extension=` / `FontIndex=` オプションで実際のファイルを指す必要がある（[xecjk_hiragino.tex](demo/ratex-v040/xecjk_hiragino.tex)、[long_xecjk_hiragino.tex](demo/ratex-v040/long_xecjk_hiragino.tex)、[xecjk_bizud.tex](demo/ratex-v040/xecjk_bizud.tex)、[long_xecjk_bizud.tex](demo/ratex-v040/long_xecjk_bizud.tex)）。ヒラギノの標準フォント（ProN）は SIP 保護領域にあり `ls` では見えないため、`fc-list`（Homebrew の fontconfig）でパスを調べた。
 - **丸数字（①②③）・ローマ数字（Ⅰ Ⅱ Ⅲ）・丸英字（Ⓐ Ⓑ Ⓒ）は、xeCJK では `\setCJKmainfont` に回らず `\setmainfont` 側で解決される。** ratex の CJK 判定（`is_cjk()`）は Enclosed CJK Letters and Months（㈠㈡㈢ など、U+3200-32FF）は対象に含むが、Enclosed Alphanumerics（①など、U+2460-24FF）と Number Forms（Ⅰなど、U+2150-218F）は対象外にしている。そのためこれらの文字は `\setCJKmainfont` ではなく地の `\setmainfont`（既定では Latin Modern Roman）に回され、そちらにグリフがなければ Missing glyph でビルドが止まる。HaranoAjiMincho・IPAexMincho はどちらもこれらのグリフを持たないため、xeCJK の既定設定では丸数字は使えない（[repro_enclosed_alnum.tex](demo/ratex-v040/repro_enclosed_alnum.tex)）。回避策は、`\setmainfont` にもこれらのグリフを持つフォント（ヒラギノなど）を指定すること。ヒラギノ明朝 ProN 自体にはグリフがあるため、`\setmainfont` と `\setCJKmainfont` の両方に指定すれば和文中に混在させても表示できる（[enclosed_alnum_hiragino.tex](demo/ratex-v040/enclosed_alnum_hiragino.tex)）。
@@ -26,22 +28,25 @@ v0.3.0 での検証（2026-09-19）と、issue [#4](https://github.com/leoliu0/r
 | 構成 | クリーンビルド | 1 文字編集後の再ビルド |
 |---|---|---|
 | Typst | 0.18 秒 | 0.18 秒 |
-| **ratex v0.4.0（xeCJK、後処理なし）** | 0.88 秒 | 0.32 秒 |
+| ratex v0.4.0（xeCJK、後処理なし） | 0.88 秒 | 0.32 秒 |
 | ratex v0.4.0（CJKutf8、後処理なし。※英字・数字・数式が化ける） | 1.06 秒 | 0.38 秒 |
-| upLaTeX + dvipdfmx | 1.5 秒 | 1.0 秒 |
-| XeLaTeX（xeCJK） | 2.3 秒 | 1.2 秒 |
-| LuaLaTeX（luatexja） | 6.4 秒 | 2.2 秒 |
+| **ratex v0.4.4（xeCJK、後処理なし）** | 1.40 秒 | 0.48 秒 |
+| upLaTeX + dvipdfmx | 1.48 秒 | 0.98 秒 |
+| ratex v0.4.4（CJKutf8、後処理なし） | 1.82 秒 | 0.61 秒 |
+| XeLaTeX（xeCJK） | 2.27 秒 | 1.13 秒 |
+| LuaLaTeX（luatexja） | 6.44 秒 | 2.20 秒 |
 | ratex v0.3.0 + 後処理（TTF を事前サブセット） | 1.4 秒 | 0.8 秒 |
 | ratex v0.3.0 + 後処理（IPAex 全体の TTF） | 16.3 秒 | 6.0 秒 |
 
 - 各 10 回（v0.3.0 の IPAex 全体のみ 3 回）。生データは [bench_result.json](demo/bench/bench_result.json)。
-- v0.4.0 と Typst、TeX 系は 2026-09-21 に同じ環境で測り直した。v0.3.0 の 2 行は、古いバイナリがないため 2026-09-19 の測定値をそのまま載せている。
-- フォントは同じではない。Typst と TeX 系は IPAex、ratex v0.4.0 の xeCJK は Harano Aji（IPAex は Bold がなく、見出しで通らないため）、CJKutf8 は同梱の和田研フォント。
+- v0.4.4 と Typst、TeX 系は 2026-09-24 に同じ環境で測った。v0.4.0 の 2 行は 2026-09-21、v0.3.0 の 2 行は 2026-09-19 の測定値を、古いバイナリがないためそのまま載せている。Typst と TeX 系は 09-21 の測定とほぼ同じ値だったので、環境の差は小さい。
+- フォントは同じではない。Typst と TeX 系は IPAex、ratex v0.4 系の xeCJK は Harano Aji（IPAex は Bold がなく、見出しで通らないため）、CJKutf8 は同梱の和田研フォント。
 - Typst は英数字にも IPAex を使う。TeX 系は Computer Modern を使うため、組版の細部は同じではない。
-- v0.3.0 の測定は、フォントのサブセット化（前処理）を含めていない。v0.4.0 は前処理も後処理もない。
-- ratex v0.4.0 は、TeX 系の中では最も速い（クリーンで upLaTeX の約 1.4〜1.7 倍、LuaLaTeX の約 6〜7 倍）。Typst には及ばない。
+- v0.3.0 の測定は、フォントのサブセット化（前処理）を含めていない。v0.4.0・v0.4.4 は前処理も後処理もない。
+- ratex v0.4.0 は、TeX 系の中では最も速かった（クリーンで upLaTeX の約 1.4〜1.7 倍、LuaLaTeX の約 6〜7 倍）。Typst には及ばない。
+- **v0.4.4 は v0.4.0 より約 1.5〜1.7 倍遅くなった**（xeCJK のクリーンで 0.88 → 1.40 秒、CJKutf8 で 1.06 → 1.82 秒）。xeCJK のクリーンビルドは upLaTeX とほぼ同じ（1.40 秒と 1.48 秒）。再ビルドはまだ upLaTeX の約 2 倍速い。原因は調べていない（v0.4.4 は LuaTeX エンジンなどが入り、バイナリも 445MB から 679MB に増えた）。
 
-### 参考: ヒラギノ・BIZ UD との比較（簡易計測）
+### 参考: ヒラギノ・BIZ UD との比較（簡易計測、v0.4.0）
 
 同じ環境・同じ 3 ページの文書で、Harano Aji に加えてヒラギノ（ProN）・BIZ UD でもビルド時間を測った（2026-09-22、各 5 回の中央値）。上の表とは計測条件が異なる簡易チェックなので、別枠で載せる。
 
@@ -76,6 +81,10 @@ demo/
     repro_enclosed_alnum.tex  丸数字・ローマ数字が xeCJK の CJK 判定に含まれず Missing glyph になる再現例
     enclosed_alnum_hiragino.tex  上の回避策（\setmainfont にもヒラギノを指定）
     repro_emoji_blank.tex  絵文字がエラーなくビルドされるが PDF には描画されない再現例
+  ratex-v044/        v0.4.4 での再確認
+    ratex-ja-example.tex  bxjsarticle + twemojis のサンプル（zr-tex8r さんの gist）
+    long_cjkutf8.pdf      ../ratex-v040/long_cjkutf8.tex を v0.4.4 でビルドしたもの（化けない）
+    repro_cjkutf8_enum.pdf  ../ratex-v040/repro_cjkutf8_enum.tex を v0.4.4 でビルドしたもの（化けない）
   ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
     build.sh           ratex でビルド → PDF のフォントを作り直す
@@ -92,12 +101,14 @@ demo/
 
 ### 1. ratex をビルドする
 
-Rust 1.89 以上が必要です。v0.4.0 はフォントを同梱するため、ソースが大きく、ビルドに約 23 分（バイナリ約 445MB）かかりました。
+Rust 1.89 以上が必要です。フォントを同梱するため、ソースが大きく、ビルドに時間がかかります（v0.4.0 は約 23 分・バイナリ約 445MB、v0.4.4 は約 29 分・約 679MB。Rust 1.98.1）。v0.4.4 の GitHub リリースには Linux 用のバイナリしかないので、macOS ではソースからビルドします。
 
 ```sh
 git clone https://github.com/leoliu0/ratex.git src
-(cd src && git checkout v0.4.0 && cargo build --release)
+(cd src && git checkout v0.4.4 && cargo build --release)   # v0.4.0 の検証を再現するなら v0.4.0
 ```
+
+`ratex -C file.tex` は、キャッシュだけでなく、ratex が作った PDF も消す（コミット済みの PDF でも、手元で ratex がビルドしたものは消える）。キャッシュだけを消すなら `-c` を使う。
 
 ### 2. 日本語 PDF を作る（v0.4.0）
 
@@ -105,6 +116,13 @@ git clone https://github.com/leoliu0/ratex.git src
 cd demo/ratex-v040
 ../../src/target/release/ratex xecjk.tex          # fontspec + xeCJK
 ../../src/target/release/ratex long_xecjk_harano.tex   # 長文（xeCJK）
+```
+
+### 2a. bxjsarticle のサンプル（v0.4.4）
+
+```sh
+cd demo/ratex-v044
+../../src/target/release/ratex ratex-ja-example.tex
 ```
 
 ### 2b. システムフォント（ヒラギノ / BIZ UD）で日本語 PDF を作る（v0.4.0）
@@ -173,9 +191,10 @@ Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。フ�
 
 ## 制限
 
-- 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー。pdf.js は未確認。
+- 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー、v0.4.4 は Poppler のみ。pdf.js は未確認。
+- v0.4.4 の再確認は、demo/ratex-v040/ の全ファイルの再ビルド（丸数字の再現例以外は成功）、CJKutf8 の 2 例と絵文字の描画確認、IPAex の `\textbf` / `\textit` と `.ttc` の `BoldFeatures={FontIndex=2}` の試行に限る。ヒラギノ・BIZ UD の出力の見た目は v0.4.4 では確認していない。
 - LuaTeX / luatexja と OpenType MATH は未対応（issue #4 より）。
-- CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
+- v0.4.0 では、CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照。v0.4.4 で修正済み）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
 - 丸数字・ローマ数字・丸英字は xeCJK の CJK 判定に含まれず `\setmainfont` 側に回るため、そちらにグリフがないと Missing glyph になる（上の結論を参照）。絵文字はビルドはエラーにならないが、`sbix` 非対応のため PDF には描画されない（同）。ビルドが成功しても表示されない例があるため、ここでも描画した画像での確認が要る。
 - 要求した太字・斜体がフォントになければエラーになる（IPAex・BIZ UD 明朝は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。
 - `\setCJKmainfont` に `Path=`/`Extension=`/`FontIndex=` で外部フォントを直接指すとき、システムフォントは fontconfig のようなフォント DB を検索しないため、名前だけでは見つからない。`BoldFont=` に渡す名前も同じ `Path`/`Extension`/`FontIndex` を引き継ぐため、Regular と Bold が同じ `.ttc` の別面にあるフォント（ヒラギノ明朝など）では選べない。単体ファイルに面を抜き出す必要がある（[demo/ratex-v040/hirafonts/](demo/ratex-v040/hirafonts/)）。
@@ -188,3 +207,4 @@ Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。フ�
 - ヒラギノは Apple 独自のライセンスのフォントです。このリポジトリには含めません。`demo/ratex-v040/hirafonts/` は `.gitignore` で除外しており、上の「2b」の `fontTools` コマンドで手元の macOS から都度抜き出します。BIZ UD はモリサワの [BIZ UDフォント](https://on-d.morisawa.co.jp/biz/) で無償配布されていますが、こちらもリポジトリには含めず、システムにインストールされたものを参照します。
 - このリポジトリのスクリプトは MIT ライセンスです（[LICENSE](LICENSE)）。
 - ratex は MIT または Apache-2.0 です。
+- [demo/ratex-v044/ratex-ja-example.tex](demo/ratex-v044/ratex-ja-example.tex) は zr-tex8r さんの [gist](https://gist.github.com/zr-tex8r/ae14db01f5325ba47c7d6ad41fa58f02) のものです。PDF に入る絵文字は [Twemoji](https://github.com/twitter/twemoji)（CC-BY 4.0）です。

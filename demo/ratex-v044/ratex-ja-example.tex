@@ -1,0 +1,24 @@
+%#!ratex
+\documentclass[pdflatex,ja=standard,a5paper]{bxjsarticle}
+\usepackage{amsmath,twemojis}
+\newcommand*\cEmoji[1]{%
+  \raisebox{-.12\zw}[.88\zw]{\twemoji[height=1\zw]{#1}}}
+\title{ナベアツ総和方程式}
+\author{某~ZR\cEmoji{upside_down_face}}
+\begin{document}
+\maketitle
+\section{いきなり結論}
+$d$~を正整数とする。%
+$1$~から~$10^d$~の範囲にあるナベアツ数の総和~$S$~
+は次の式で求められる。
+\[
+S = \begin{cases}
+18 & \text{（}d = 1\text{~のとき）}\\
+\dfrac{(10^d - 1)(81\cdot10^d - 56\cdot9^d)}{162} &
+  \text{（それ以外）}
+\end{cases}
+\]
+\section{まとめ}
+もっと本質的\cEmoji{snowman}な文書をつくりましょう！%
+\cEmoji{information_desk_person}
+\end{document}

@@ -100,7 +100,7 @@ class Ratex(Tool):
 
 
 class RatexNative(Tool):
-    """ratex v0.4.0。後処理なしで、そのままビルドする"""
+    """ratex v0.4 系。後処理なしで、そのままビルドする"""
 
     def __init__(self, name, source):
         self.name, self.source = name, source
@@ -129,20 +129,22 @@ def stats(xs):
 
 
 def main():
+    ver = run([str(RATEX), "--version"], HERE).stdout.split()[1]  # "ratex 0.4.4 (Rust TeX engine)"
     ratex_files = ["../ja-font/long.tex", "../ja-font/fix_cjk.py", "../ja-font/ipaexm.ttf", "../ja-font/ipaexg.ttf",
                  "../ja-font/udmj.map", "../ja-font/udgj.map"] + [str(p) for p in (ROOT / "demo/ja-font").glob("ud*.enc")]
     tools = [
-        (RatexNative("ratex v0.4.0 (CJKutf8)", "long_cjkutf8.tex"), ["../ratex-v040/long_cjkutf8.tex"]),
-        (RatexNative("ratex v0.4.0 (xeCJK)", "long_xecjk_harano.tex"), ["../ratex-v040/long_xecjk_harano.tex"]),
+        (RatexNative(f"ratex v{ver} (CJKutf8)", "long_cjkutf8.tex"), ["../ratex-v040/long_cjkutf8.tex"]),
+        (RatexNative(f"ratex v{ver} (xeCJK)", "long_xecjk_harano.tex"), ["../ratex-v040/long_xecjk_harano.tex"]),
         (Typst(), ["long.typ", "../ja-font/ipaexm.ttf", "../ja-font/ipaexg.ttf"]),
         (Latexmk("LuaLaTeX (luatexja)", "lua.tex", ["-lualatex"]), ["lua.tex", "body.tex"]),
         (Latexmk("XeLaTeX (xeCJK)", "xe.tex", ["-xelatex"]), ["xe.tex", "body.tex"]),
         (Latexmk("upLaTeX + dvipdfmx", "up.tex", ["-pdfdvi", "-latex=uplatex", "-e", "$dvipdf=q/dvipdfmx %O -o %D %S/"]), ["up.tex", "body.tex"]),
     ]
     shutil.rmtree(WORK, ignore_errors=True)
-    # v0.3.0 の測定値 (後処理つき) は、古いバイナリがないので既存の JSON から引き継ぐ
+    # 別バージョンの ratex の測定値 (v0.3.0 の後処理つきなど) は、古いバイナリがないので既存の JSON から引き継ぐ
     old = HERE / "bench_result.json"
-    results = {k: v for k, v in json.loads(old.read_text()).items() if k.startswith("ratex + 後処理")} if old.exists() else {}
+    keep = lambda k: k.startswith("ratex + 後処理") or (k.startswith("ratex v") and not k.startswith(f"ratex v{ver} "))
+    results = {k: v for k, v in json.loads(old.read_text()).items() if keep(k)} if old.exists() else {}
     for tool, files in tools:
         d = WORK / tool.name.replace(" ", "_").replace("/", "_")
         d.mkdir(parents=True, exist_ok=True)
