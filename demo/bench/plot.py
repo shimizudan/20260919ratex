@@ -32,7 +32,7 @@ label = {
 names = sorted(res, key=lambda k: res[k]["clean"]["median"])
 
 plt.rcParams["font.family"] = [f.name for f in font_manager.fontManager.ttflist if f.name == "Hiragino Sans"][:1] or ["sans-serif"]
-fig, axes = plt.subplots(1, 2, figsize=(10, 4.6), sharey=True, facecolor="#fcfcfb")
+fig, axes = plt.subplots(1, 2, figsize=(10, 1.0 + 0.45 * len(names)), sharey=True, facecolor="#fcfcfb")
 for ax, (scn, title) in zip(axes, [("clean", "クリーンビルド"), ("edit", "1 文字編集後の再ビルド")]):
     ax.set_facecolor("#fcfcfb")
     ys = range(len(names))[::-1]
