@@ -1,0 +1,11 @@
+% ratex v0.4.7 / v0.5.0 の不具合：-lualatex で同梱の原ノ味明朝を選ぶと luaotfload が落ちる
+%   LuaTeX error bad argument #1 to 'next' (table expected)
+%   fontloader-2023-12-28.lua:17645: in upvalue 'tabstr_normal'（フォントのキャッシュを pack する処理）
+% HaranoAjiGothic-Medium・IPAexMincho は通る。-xelatex では原ノ味明朝も通る
+% TeX Live 2020 の lualatex では通る
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{HaranoAjiMincho}
+\begin{document}
+日本語 ABC
+\end{document}

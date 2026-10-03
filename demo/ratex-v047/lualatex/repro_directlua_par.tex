@@ -1,0 +1,8 @@
+% ratex v0.4.7 の不具合（v0.5.0 で修正済み。issue #17 の対応）：\directlua の中の空行（\par）が Lua に渡り、構文エラーになる
+% 本物の LuaTeX は \directlua の中の \par を捨てる（TeX Live 2020 では通る）
+% luatexbase.sty（luacode が読み込む）がこれに当たる
+\documentclass{article}
+\directlua{local a = 1
+
+texio.write_nl("ok " .. a)}
+\begin{document}x\end{document}

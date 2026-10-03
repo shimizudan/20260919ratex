@@ -1,0 +1,32 @@
+% LuaLaTeX で日本語（LuaTeX-ja なし。fontspec + 同梱の IPAex フォント）
+% 原ノ味フォント（OpenType/CFF）は v0.4.7 の LuaLaTeX モードでは luaotfload が落ちて使えない
+% ratex v0.4.7 には LuaTeX-ja（luatexja.sty, ltjsarticle.cls）が同梱されていない
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{IPAexMincho}[BoldFont=IPAexGothic]
+\setsansfont{IPAexGothic}
+\usepackage{amsmath}
+\directlua{dofile(kpse.find_file("lua_ja.lua", "lua"))}
+
+\begin{document}
+\section*{LuaLaTeX で日本語}
+
+これは ratex の LuaLaTeX モードで組んだ日本語の文書です。和文の行分割は LuaTeX-ja の
+代わりに、Lua で書いたコールバックが文字の間に伸縮する空白を入れて行っています。
+句読点や括弧（かっこ）は行頭に来ないように、ごく簡単な禁則処理も入れました。
+English words and 数式 $e^{i\pi}+1=0$ can be mixed in the same paragraph.
+
+\subsection*{数式}
+二次方程式 $ax^2+bx+c=0$ の解は
+\begin{equation}
+  x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}
+\end{equation}
+です。
+
+\subsection*{Lua で計算}
+1 から 10 までの和は \directlua{local s=0 for i=1,10 do s=s+i end tex.print(s)} です。
+\directlua{tex.sprint("Lua から出力した日本語：こんにちは")}。
+
+\subsection*{書体}
+\textbf{太字（ゴシック）}、\textsf{ゴシック体}、\textit{italic} です。
+\end{document}

@@ -1,0 +1,202 @@
+% 20240922.typ（Typst）を LaTeX で再現したもの
+% ratex v0.4.7 でのビルド: ratex -xelatex 20240922.tex
+\documentclass[10pt,twocolumn]{article}
+
+% 用紙：JIS B4 横，余白 左右 1.5cm・上下 1cm
+\usepackage[paperwidth=364mm,paperheight=257mm,hmargin=1.5cm,vmargin=1cm]{geometry}
+\setlength{\columnsep}{13mm}
+
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{xeCJK}
+
+% フォント：BIZ UDP明朝（本文），BIZ UDPゴシック（見出し・太字）
+% ratex は OS のフォントを名前では探さないので，ファイルと面番号を指定する
+% （BIZ UDP 系は .ttc の面 1）
+\setmainfont{BIZ-UDMinchoM}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=1]
+\setsansfont{BIZ-UDGothicR}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=1,BoldFont=BIZ-UDGothicB]
+\setCJKmainfont{BIZ-UDMinchoM}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=1]
+\setCJKsansfont{BIZ-UDGothicR}[Path=/Library/Fonts/,Extension=.ttc,FontIndex=1,BoldFont=BIZ-UDGothicB]
+
+% 段落：両端揃え，字下げなし，行送りを広めに
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\AtBeginDocument{\fontsize{10pt}{17pt}\selectfont}
+\pagestyle{empty}
+
+% 小問の番号 (1), (2), ...
+\setlist{leftmargin=*,labelindent=0pt,itemsep=0pt,parsep=0pt,topsep=0pt,partopsep=0pt}
+\setlist[enumerate]{label=(\arabic*)}
+
+% #dai：18pt ゴシック太字，太さ 1.5pt の下線
+\newcommand{\dai}[1]{%
+  {\fontsize{18pt}{26pt}\selectfont\sffamily\bfseries
+   \sbox0{#1}\usebox0\hspace{-\wd0}\rule[-5.75pt]{\wd0}{1.5pt}}}
+
+% #bf：ゴシック太字
+\newcommand{\gbf}[1]{{\sffamily\bfseries #1}}
+
+% #hako：幅 1cm・高さ 6mm の解答欄
+\newcommand{\hako}[1]{{\setlength{\fboxsep}{0pt}%
+  \fbox{\rule[-1.8mm]{0pt}{6mm}\makebox[10mm][l]{\hspace*{3.5mm}#1}}}}
+
+% 見出し（= ...）：番号「1.」を大きめの太字ゴシックで。問題文は同じ行に続ける
+\newcounter{mondai}
+\newcommand{\mondai}{%
+  \par\vspace{0.6em}\stepcounter{mondai}%
+  \noindent{\fontsize{14pt}{17pt}\selectfont\sffamily\bfseries\themondai.}\ \ }
+
+\begin{document}
+
+\twocolumn[\dai{2024年度　第3学期　実力考査　中学3年　数学}\vspace{6mm}]
+
+\noindent\hspace*{10cm}\gbf{2025年1月　　日（　）　担当：清水}
+
+\gbf{【注意事項】}
+
+\gbf{3. 〜 8. は答えのみではなく，考え方や計算式・図などを記すこと。}
+
+\vspace{5mm}
+
+\gbf{今回の実力試験は「距離」をテーマにして色々な問題について考えてみます。}
+
+\vspace{5mm}
+
+%--------------------------------------------------------------- 1
+\mondai
+\hako{　} を適切に埋めよ。（答えのみでよい。）
+
+\vspace{5mm}
+
+\gbf{清水：} 今回はいろいろな「距離」について考えてみましょう。まずは1次元で考えてみます。$x$ 軸上に2点A$(a)$ ，B$(b)$ があります。この2点の距離ABは絶対値を用いてどのように表されますか？
+
+\gbf{太郎：} AB$=$ \hako{ア} となります。例えば，$a=10$，$b=-23$ のとき，AB$=$ \hako{イ} です。
+
+\gbf{清水：} $x$ 軸上の3点をX$(x)$ ，A$(-1)$ ，B$(2)$ とします。AXの距離がBXの2倍であるときの実数 $x$ を求めてみましょう。
+
+\gbf{花子：} 今回の関係式は
+$\mathrm{AX}=2\mathrm{BX}$
+となります。 $x$ についての式にすると，\hako{ウ} となり，この関係式を満たす $x$ は， $x=$ \hako{エ} です。$x$ は複数個あるのですね。
+
+\vspace{5mm}
+
+\gbf{清水：} 続いて2次元で考えてみましょう。まず，$xy$平面上の2点P$(a,b)$，Q$(c,d)$があるとき，2点P,Qの距離はどのように表すことができますか？
+
+\gbf{花子：} PQ$=$ \hako{オ} となります。例えば，P$(-3,10)$，Q$(7,-7)$のとき，PQ$=$ \hako{カ} です。
+
+\gbf{清水：} $xy$ 平面上の3点をX$(x,0)$ ，R$(1,4)$ ，S$(3,-6)$ とします。$\mathrm{RX}^2+\mathrm{SX}^2$の値が最小となる$x$のその時の値はどうなるでしょうか？
+
+\gbf{太郎：} $x$を変量と考えるとと$\mathrm{RX}^2+\mathrm{SX}^2$は$x$の二次関数になりますね。$\mathrm{RX}^2+\mathrm{SX}^2$を$x$であらわすと， \hako{キ} となり，平方完成して， \hako{ク} となります。よって，$x=$ \hako{ケ} のとき最小値 \hako{コ} ですね。
+
+\vspace{5mm}
+
+\gbf{花子：} 清水先生，もし，$\mathrm{RX}+\mathrm{SX}$だったら，最小値はもとまるのでしょうか？
+
+\gbf{清水：} 求められるよ。考えてみてください。
+
+\gbf{花子：} $x$についての式で表してみたけど，今の私たちでは最小値が求められるような式ではないですね。
+
+\gbf{太郎：} そうだね。とりあえず，図でも書いてみる？
+\[
+  \text{＜考え中＞}
+\]
+
+\gbf{太郎：} 図を書いて考えるとわかることもあるんだね。$x=$ \hako{サ} のとき，最小値は \hako{シ} とわかりました。
+
+\gbf{清水：} よかったですね！
+
+\newpage %-------------------------------------------------- 段の区切り
+
+\gbf{距離を考えるときに制限がある場合があります。}
+
+%--------------------------------------------------------------- 2
+\mondai
+図のような直方体ABCD-EFGHがあります。AB=3，AD = 4，AE=7です。辺AB上にAP=2となる点P，辺GC上にGQ=1となる点Qがあります。
+
+\begin{enumerate}
+  \item 直方体の辺上だけを移動できるとき，PからQへの最短距離を求めよ。
+  \item 直方体の辺，面，及びその内部を移動できるとき，PからQへの最短距離を求めよ。
+  \item 直方体の辺及び面上だけを移動できるとき，PからQへの最短距離を求めよ。
+\end{enumerate}
+
+\vspace{15mm}
+
+%--------------------------------------------------------------- 3
+\mondai
+図のような格子状の経路があります。縦の長さは10，横の長さは6です。次の問いに答えよ。
+
+\begin{enumerate}
+  \item 点Aから点Bへの最短経路は何通りですか？
+  \item 点Aから点Bへの最短経路のうち，PとQのどちらも通らない方法は何通りですか？
+  \item 点Aから点Bへの最短経路のうち，4回曲がるのは何通りですか？
+\end{enumerate}
+
+\vspace{15mm}
+
+\gbf{距離と角度について考えてみましょう}
+
+%--------------------------------------------------------------- 4
+\mondai
+AB=10，AD=5の長方形があります。点Aから球を発車して，点Cへ到達到達します。次の(1)〜(3)の場合において，図の $\theta$ と球の移動した距離を求めよ。ただし，球は辺とぶつかると，入射角と反射角が同じになるように跳ね返ります。$\theta$ を求めるとき，三角関数表を用いてよい。
+
+\begin{enumerate}
+  \item \mbox{}
+  \item \mbox{}
+  \item \mbox{}
+\end{enumerate}
+
+\gbf{地球儀のように球面上で距離を考えることがあります。}
+
+%--------------------------------------------------------------- 5
+\mondai
+半径が10cmの地球儀の赤道上の点Pにいます。Pからこの地球儀上を次のように移動します。
+
+\begin{itemize}
+  \item 点Pから北に10cm移動して点Qに到達
+  \item 点Qから東に10cm移動して点Rに到達
+  \item 点Rから南に10cm移動して点Sに到達
+\end{itemize}
+
+次の問いに答えよ。三角関数表を用いてよい。
+
+\begin{enumerate}
+  \item 点Pは北緯何度か？ただし，赤道は北緯0度，北極点は北緯90度である。
+  \item 点Pと点Sの距離（地球儀上を移動する最短距離）は何cmか？
+  \item 点Qと点Rの距離（地球儀上を移動する最短距離）は何cmか？
+\end{enumerate}
+
+\newpage %-------------------------------------------------- 段の区切り
+
+%--------------------------------------------------------------- 6
+\mondai $x$ ， $y$ が整数のとき，方程式 $7x-5y=1\ldots\text{①}$ を次の順序で解け。　（10点）
+
+\vspace{3mm}
+
+\begin{enumerate}
+  \item ①を満たす1組の $(x,y)$ を求めよ。
+  \item ①の一般解を求めよ。
+\end{enumerate}
+
+\vspace{18mm}
+
+%--------------------------------------------------------------- 7
+\mondai $29$ で割ると $20$ 余り， $37$ で割ると $21$ 余る自然数で，最小のものを求めよ。　（10点）
+
+\vspace{18mm}
+
+%--------------------------------------------------------------- 8
+\mondai $x^2-3xy+2y^2=12$ を満たす自然数 $x$ ， $y$ の組をすべて求めよ。　（10点）
+
+\vspace{18mm}
+
+%--------------------------------------------------------------- 9
+\mondai $\displaystyle\frac{1}{p}+\frac{1}{q}+\frac{1}{r}=1$ を満たす自然数 $p,q,r$ （ $p\leqq q\leqq r$ ）の組をすべて求めよ。　（10点）
+
+\vspace{18mm}
+
+%--------------------------------------------------------------- 10
+\mondai $a+b+c+d=abcd$ を満たす自然数 $a,b,c,d$ の組は何組あるか。　（10点）
+
+\vspace{18mm}
+
+\end{document}

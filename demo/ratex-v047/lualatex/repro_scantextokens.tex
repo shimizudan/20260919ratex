@@ -1,0 +1,6 @@
+% ratex v0.4.7 / v0.5.0 の不具合：\scantextokens が末尾に改行文字（^^M）を足す
+% luacode の終了マークが「\end{luacode*}^^M」になり、\end{luacode*} を見つけられない
+% 本物の LuaTeX の \scantextokens は改行を足さない（TeX Live 2020 では通る）
+\documentclass{article}
+\edef\x{\scantextokens{abc}}\show\x
+\begin{document}x\end{document}

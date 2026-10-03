@@ -1,0 +1,18 @@
+% LuaTeX らしい機能：node コールバックと fontspec
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{Latin Modern Roman}
+\directlua{dofile(kpse.find_file("lua_node.lua", "lua"))}
+
+\begin{document}
+\section*{Node callbacks}
+
+Lua can walk the node list before line breaking. Every occurrence of
+Lua in this paragraph is painted red by a pre\_linebreak\_filter
+callback written in Lua.
+
+Ligatures and kerning via fontspec: ffi fl --- ``quotes'' AV WA.
+
+\bigskip
+Glyphs counted so far: \directlua{tex.print(glyph_count)}.
+\end{document}

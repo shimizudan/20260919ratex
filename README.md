@@ -2,10 +2,17 @@
 
 Rust 製の TeX エンジン [ratex](https://github.com/leoliu0/ratex) で日本語を含む PDF を生成する検証と、
 Typst・通常の TeX とのビルド時間の比較です（macOS）。
-v0.3.0 での検証（2026-09-19）、issue [#4](https://github.com/leoliu0/ratex/issues/4) の対応後の v0.4.0 での再検証（2026-09-21）、v0.4.4 での再確認（2026-09-24）があります。
+v0.3.0 での検証（2026-09-19）、issue [#4](https://github.com/leoliu0/ratex/issues/4) の対応後の v0.4.0 での再検証（2026-09-21）、v0.4.4 での再確認（2026-09-24）、v0.4.7 での LuaLaTeX と文書サンプルの検証（2026-10-03、v0.5.0 で再確認）があります。
 
 ## 結論
 
+- **v0.4.7（2026-10-03 確認）では、xeCJK で実用的な教材が作れる。** ウォリス積分の問題と解答（A4 縦 1 ページ。tcolorbox の枠と TikZ のグラフつき、同梱の原ノ味フォント）の [wallis.tex](demo/ratex-v047/wallis/wallis.tex)（[PDF](demo/ratex-v047/wallis/wallis.pdf)）と、Typst で書いた B4 横 2 段組の考査問題を LaTeX に移した [20240922.tex](demo/ratex-v047/typst-port/20240922.tex)（元は [20240922.typ](demo/ratex-v047/typst-port/20240922.typ)。BIZ UDP 明朝・ゴシックを `Path=`/`FontIndex=1` で指定）が、どちらもエラー・警告なしで通った。v0.5.0（本物の XeTeX モードに切り替わった版）でも通る。
+- **v0.4.7 では、`ratex -lualatex` で LuaLaTeX の文書がコンパイルできる。** `\directlua`、外部の `.lua` ファイル、node コールバック（`pre_linebreak_filter`）、fontspec（luaotfload）が動く（[demo/ratex-v047/lualatex/](demo/ratex-v047/lualatex/)）。Lua 5.3 で、`status.luatex_version` は 124（LuaTeX 1.24 として振る舞う）。ただし次の制限がある。
+  - **`luacode` パッケージが通らない。** v0.4.7 では 2 つの不具合が重なっていた。`\directlua` の中の空行（`\par`）を Lua に渡してしまう不具合（本物の LuaTeX は捨てる。[repro_directlua_par.tex](demo/ratex-v047/lualatex/repro_directlua_par.tex)）は v0.5.0 で直った（issue [#17](https://github.com/leoliu0/ratex/issues/17) の対応）。`\scantextokens` が末尾に改行文字を足す不具合（[repro_scantextokens.tex](demo/ratex-v047/lualatex/repro_scantextokens.tex)）は v0.5.0 でも残っており、`luacode*` 環境は終了マークを見つけられずに失敗する（[repro_luacode.tex](demo/ratex-v047/lualatex/repro_luacode.tex)）。回避策は、Lua のコードを別ファイルに書いて `\directlua{dofile(kpse.find_file("x.lua", "lua"))}` で読むこと。
+  - **LuaTeX-ja は同梱されていない**（`luatexja.sty`・`ltjsarticle.cls` が not found）。日本語は fontspec で同梱フォントを選べば出るが、和文の行分割は自分で用意する必要がある。[lua_ja.tex](demo/ratex-v047/lualatex/lua_ja.tex) では、Lua のコールバックで和文の文字間に伸縮する glue を入れ、簡単な禁則処理をした。
+  - **同梱の原ノ味明朝を選ぶと luaotfload が落ちる**（`bad argument #1 to 'next'`。[repro_harano_lualatex.tex](demo/ratex-v047/lualatex/repro_harano_lualatex.tex)）。原ノ味ゴシック Medium と IPAex は通る。`-xelatex` では原ノ味明朝も通る。v0.5.0 でも同じ。
+  - 上の不具合は、どれも TeX Live 2020 の lualatex では起きない。
+  - `-lualatex` のビルドは 1 本 7〜9 秒かかった（初回。`-xelatex` は 1 秒前後）。
 - **v0.4.4（2026-09-24 確認）では、v0.4.0 の CJKutf8 の化けが直った。** [long_cjkutf8.tex](demo/ratex-v040/long_cjkutf8.tex)（3 ページ、目次・数式・表つき）も [repro_cjkutf8_enum.tex](demo/ratex-v040/repro_cjkutf8_enum.tex) も、英字・数字・数式が正しく出る（出力は [demo/ratex-v044/](demo/ratex-v044/)）。一方、下に書いた v0.4.0 のほかの制限（太字・斜体がないとエラー、同じ `.ttc` の別面を `BoldFont=` で選べない、丸数字が Missing glyph、絵文字フォントが描画されない）は、v0.4.4 でも同じだった。ビルドは v0.4.0 より遅くなった（下の表）。
 - **v0.4.4 では、bxjsarticle（`pdflatex,ja=standard`）で日本語 PDF がそのまま作れる。** zr-tex8r さんのサンプル [ratex-ja-example.tex](demo/ratex-v044/ratex-ja-example.tex)（[gist](https://gist.github.com/zr-tex8r/ae14db01f5325ba47c7d6ad41fa58f02)）が、エラー・警告なしで 1 ページの PDF になった（[ratex-ja-example.pdf](demo/ratex-v044/ratex-ja-example.pdf)）。和文は同梱の和田研フォント（明朝・ゴシック）、`cases` と `\dfrac` の数式、`\text{}` 内の和文も正しく出る。**`twemojis` パッケージの絵文字（🙃☃💁）も描画される。** フォントではなく画像として貼るため、下の Apple Color Emoji の問題にはかからない。
 - ratex は英語と数式なら、そのままで動く。
@@ -85,6 +92,17 @@ demo/
     ratex-ja-example.tex  bxjsarticle + twemojis のサンプル（zr-tex8r さんの gist）
     long_cjkutf8.pdf      ../ratex-v040/long_cjkutf8.tex を v0.4.4 でビルドしたもの（化けない）
     repro_cjkutf8_enum.pdf  ../ratex-v040/repro_cjkutf8_enum.tex を v0.4.4 でビルドしたもの（化けない）
+  ratex-v047/        v0.4.7 での検証（v0.5.0 で再確認）
+    wallis/            ウォリス積分の問題と解答（A4 縦、xeCJK・tcolorbox・TikZ）
+    typst-port/        Typst の考査問題（20240922.typ）を LaTeX に移したもの（B4 横 2 段組、BIZ UDP）
+    lualatex/          ratex -lualatex のサンプル
+      lua_basic.tex/.lua   \directlua と外部 .lua ファイル（計算、表の生成）
+      lua_node.tex/.lua    node コールバック（文字数を数える、文字を赤くする）、fontspec
+      lua_ja.tex/.lua      fontspec + IPAex の日本語。Lua で和文の行分割と簡単な禁則
+      repro_directlua_par.tex  \directlua の中の空行が Lua に渡る（v0.5.0 で修正済み）
+      repro_scantextokens.tex  \scantextokens が末尾に改行文字を足す
+      repro_luacode.tex        luacode* 環境が終わらない（上の不具合が原因）
+      repro_harano_lualatex.tex  -lualatex で原ノ味明朝を選ぶと luaotfload が落ちる
   ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
     build.sh           ratex でビルド → PDF のフォントを作り直す
@@ -106,6 +124,14 @@ Rust 1.89 以上が必要です。フォントを同梱するため、ソース�
 ```sh
 git clone https://github.com/leoliu0/ratex.git src
 (cd src && git checkout v0.4.4 && cargo build --release)   # v0.4.0 の検証を再現するなら v0.4.0
+```
+
+v0.4.5 からは、GitHub のリリースに macOS 用（Apple Silicon・Intel）のビルド済み版（`tex-suite-v0.4.x-macos-aarch64.tar.gz` など）があるので、ソースからビルドしなくてよい。展開した `bin/ratex` をそのまま使うか、PATH の通った場所にリンクする。
+
+```sh
+gh release download v0.4.7 -R leoliu0/ratex -p 'tex-suite-v0.4.7-macos-aarch64.tar.gz'
+tar xzf tex-suite-v0.4.7-macos-aarch64.tar.gz
+./tex-suite-macos-aarch64/bin/ratex --version
 ```
 
 `ratex -C file.tex` は、キャッシュだけでなく、ratex が作った PDF も消す（コミット済みの PDF でも、手元で ratex がビルドしたものは消える）。キャッシュだけを消すなら `-c` を使う。
@@ -164,6 +190,14 @@ cd demo/ja-font
 自分の文書を使う場合は、`\usepackage{CJKutf8}` と `\pdfmapfile{+udmj.map}`（ゴシックは `+udgj.map`）を追加して、
 `./build.sh mydoc.tex` を実行します（[long.tex](demo/ja-font/long.tex) を参照）。
 
+### 2c. v0.4.7 のサンプル
+
+```sh
+cd demo/ratex-v047/wallis     && ratex -xelatex wallis.tex
+cd ../typst-port              && ratex -xelatex 20240922.tex   # BIZ UD フォント（/Library/Fonts）が必要
+cd ../lualatex                && ratex -lualatex lua_basic.tex # lua_node.tex, lua_ja.tex も同じ
+```
+
 ### 3. ビルド時間を比べる
 
 MacTeX、Typst、上の手順が必要です。
@@ -193,7 +227,9 @@ Rust 1.90 で約 2 分でビルドできた（`cargo build --release`）。フ�
 
 - 検証は macOS のみ。v0.4.0 の表示確認は Poppler と macOS プレビュー、v0.4.4 は Poppler のみ。pdf.js は未確認。
 - v0.4.4 の再確認は、demo/ratex-v040/ の全ファイルの再ビルド（丸数字の再現例以外は成功）、CJKutf8 の 2 例と絵文字の描画確認、IPAex の `\textbf` / `\textit` と `.ttc` の `BoldFeatures={FontIndex=2}` の試行に限る。ヒラギノ・BIZ UD の出力の見た目は v0.4.4 では確認していない。
-- LuaTeX / luatexja と OpenType MATH は未対応（issue #4 より）。
+- v0.4.7 の LuaTeX モードは、上の「結論」に書いたサンプルと再現例で試しただけ。luatexja は同梱されていない。OpenType MATH は試していない。
+- v0.4.7 の表示確認は Poppler のみ。v0.5.0 の再確認はビルドが通るかどうかだけで、出力の見た目は比べていない。
+- v0.4.6 で入った fontspec の変更（太字・斜体がないときに近い字形で代用して警告を出す、`BoldFont=` などのフェイス指定）は、下の 2 項目の制限を変える可能性があるが、試していない。
 - v0.4.0 では、CJKutf8 の長文で英字・数字・数式が化ける（上の結論を参照。v0.4.4 で修正済み）。表示の確認は、テキスト抽出だけでなく、描画した画像でも行うこと（抽出は正しく見える）。
 - 丸数字・ローマ数字・丸英字は xeCJK の CJK 判定に含まれず `\setmainfont` 側に回るため、そちらにグリフがないと Missing glyph になる（上の結論を参照）。絵文字はビルドはエラーにならないが、`sbix` 非対応のため PDF には描画されない（同）。ビルドが成功しても表示されない例があるため、ここでも描画した画像での確認が要る。
 - 要求した太字・斜体がフォントになければエラーになる（IPAex・BIZ UD 明朝は Bold なし。日本語の `\textit` も不可）。`BoldFont=` は、ファイル名を渡さない形では効かなかった。

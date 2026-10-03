@@ -1,0 +1,10 @@
+% ratex v0.4.7 / v0.5.0 の不具合：luacode* 環境が終わらない（File ended while scanning use of \luacode@grab@lines）
+% 原因は \scantextokens が末尾に改行文字を足すこと（repro_scantextokens.tex）
+% luacode は終了マークを \scantextokens で作るため、\end{luacode*} の行と一致しなくなる
+% TeX Live 2020 の lualatex では通る
+\documentclass{article}
+\usepackage{luacode}
+\begin{luacode*}
+texio.write_nl("LUACODE-OK")
+\end{luacode*}
+\begin{document}x\end{document}
