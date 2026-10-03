@@ -93,7 +93,7 @@ demo/
     long_cjkutf8.pdf      ../ratex-v040/long_cjkutf8.tex を v0.4.4 でビルドしたもの（化けない）
     repro_cjkutf8_enum.pdf  ../ratex-v040/repro_cjkutf8_enum.tex を v0.4.4 でビルドしたもの（化けない）
   ratex-v047/        v0.4.7 での検証（v0.5.0 で再確認）
-    wallis/            ウォリス積分の問題と解答（A4 縦、xeCJK・tcolorbox・TikZ）
+    wallis/            ウォリス積分の問題と解答（A4 縦、xeCJK・tcolorbox・TikZ。PDF は v0.5.0 でビルド）
     typst-port/        Typst の考査問題（20240922.typ）を LaTeX に移したもの（B4 横 2 段組、BIZ UDP）
     lualatex/          ratex -lualatex のサンプル
       lua_basic.tex/.lua   \directlua と外部 .lua ファイル（計算、表の生成）
