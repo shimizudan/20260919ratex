@@ -6,6 +6,7 @@ v0.3.0 での検証（2026-09-19）、issue [#4](https://github.com/leoliu0/rate
 
 ## 結論
 
+- **v0.5.0（2026-10-04 確認）では、bxjsarticle の `xelatex` オプション版も通る。** v0.5.0 で `-xelatex` が本物の XeTeX モードになったため（v0.4.7 の `-xelatex` は互換モードで、「Option 'xelatex' used on wrong engine」で止まる）。zr-tex8r さんのサンプルのクラスオプションを `xelatex` に変えた [ratex-ja-example-2.tex](demo/ratex-v050/ratex-ja-example-2.tex) が、`ratex -xelatex` で 1 ページの PDF になった（[PDF](demo/ratex-v050/ratex-ja-example-2.pdf)）。和文は原ノ味明朝・ゴシック（`pdflatex` 版は和田研フォント）で、twemojis の絵文字も描画される。`-xelatex` を付けないと pdfLaTeX が選ばれ、bxjsarticle のエラーで止まる。
 - **v0.4.7（2026-10-03 確認）では、xeCJK で実用的な教材が作れる。** ウォリス積分の問題と解答（A4 縦 1 ページ。tcolorbox の枠と TikZ のグラフつき、同梱の原ノ味フォント）の [wallis.tex](demo/ratex-v047/wallis/wallis.tex)（[PDF](demo/ratex-v047/wallis/wallis.pdf)）と、Typst で書いた B4 横 2 段組の考査問題を LaTeX に移した [20240922.tex](demo/ratex-v047/typst-port/20240922.tex)（元は [20240922.typ](demo/ratex-v047/typst-port/20240922.typ)。BIZ UDP 明朝・ゴシックを `Path=`/`FontIndex=1` で指定）が、どちらもエラー・警告なしで通った。v0.5.0（本物の XeTeX モードに切り替わった版）でも通る。
 - **v0.4.7 では、`ratex -lualatex` で LuaLaTeX の文書がコンパイルできる。** `\directlua`、外部の `.lua` ファイル、node コールバック（`pre_linebreak_filter`）、fontspec（luaotfload）が動く（[demo/ratex-v047/lualatex/](demo/ratex-v047/lualatex/)）。Lua 5.3 で、`status.luatex_version` は 124（LuaTeX 1.24 として振る舞う）。ただし次の制限がある。
   - **`luacode` パッケージが通らない。** v0.4.7 では 2 つの不具合が重なっていた。`\directlua` の中の空行（`\par`）を Lua に渡してしまう不具合（本物の LuaTeX は捨てる。[repro_directlua_par.tex](demo/ratex-v047/lualatex/repro_directlua_par.tex)）は v0.5.0 で直った（issue [#17](https://github.com/leoliu0/ratex/issues/17) の対応）。`\scantextokens` が末尾に改行文字を足す不具合（[repro_scantextokens.tex](demo/ratex-v047/lualatex/repro_scantextokens.tex)）は v0.5.0 でも残っており、`luacode*` 環境は終了マークを見つけられずに失敗する（[repro_luacode.tex](demo/ratex-v047/lualatex/repro_luacode.tex)）。回避策は、Lua のコードを別ファイルに書いて `\directlua{dofile(kpse.find_file("x.lua", "lua"))}` で読むこと。
@@ -103,6 +104,8 @@ demo/
       repro_scantextokens.tex  \scantextokens が末尾に改行文字を足す
       repro_luacode.tex        luacode* 環境が終わらない（上の不具合が原因）
       repro_harano_lualatex.tex  -lualatex で原ノ味明朝を選ぶと luaotfload が落ちる
+  ratex-v050/        v0.5.0 での確認
+    ratex-ja-example-2.tex  bxjsarticle の xelatex 版（ratex-v044/ratex-ja-example.tex のクラスオプションを xelatex に変えたもの。ratex -xelatex でビルド）
   ja-font/           v0.3.0 用の回避策（後処理あり）
     setup.sh           IPAex の取得と、サブフォント用 enc / map の生成
     build.sh           ratex でビルド → PDF のフォントを作り直す
@@ -196,6 +199,15 @@ cd demo/ja-font
 cd demo/ratex-v047/wallis     && ratex -xelatex wallis.tex
 cd ../typst-port              && ratex -xelatex 20240922.tex   # BIZ UD フォント（/Library/Fonts）が必要
 cd ../lualatex                && ratex -lualatex lua_basic.tex # lua_node.tex, lua_ja.tex も同じ
+```
+
+### 2d. bxjsarticle の xelatex 版（v0.5.0）
+
+`-xelatex` を付けないと、ratex は pdfLaTeX を選び、bxjsarticle が「Option 'xelatex' used on wrong engine」で止まる。
+
+```sh
+cd demo/ratex-v050
+ratex -xelatex ratex-ja-example-2.tex
 ```
 
 ### 3. ビルド時間を比べる

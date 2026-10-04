@@ -19,6 +19,7 @@ demo/ja-font/build/
 !demo/ratex-v040/*.pdf
 !demo/ratex-v044/*.pdf
 !demo/ratex-v047/**/*.pdf
+!demo/ratex-v050/*.pdf
 !demo/rtex-yingkitw/rt.pdf
 
 # TeX / macOS
