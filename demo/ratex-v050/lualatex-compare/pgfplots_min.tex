@@ -1,0 +1,11 @@
+% pgfplots（issue #19）。ratex v0.5.0 -lualatex では pgfplots の Lua ファイルの読み込みで落ちる。TeX Live 2026 の lualatex では通る
+\documentclass{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[xlabel=$x$,ylabel=$y$]
+\addplot[domain=0:3.1416,samples=50,blue]{sin(deg(x))^2};
+\end{axis}
+\end{tikzpicture}
+\end{document}

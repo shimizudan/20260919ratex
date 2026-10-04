@@ -1,0 +1,16 @@
+% LuaTeX-ja と luacode*。TeX Live 2026 の lualatex では通る。ratex v0.5.0 には ltjsarticle.cls が同梱されていない
+\documentclass{ltjsarticle}
+\usepackage{luacode}
+\begin{luacode*}
+function wallis(n)
+  local v = (n % 2 == 0) and math.pi / 2 or 1
+  for k = n, 2, -2 do v = v * (k - 1) / k end
+  tex.print(string.format("%.6f", v))
+end
+\end{luacode*}
+\begin{document}
+\section{LuaTeX-ja のテスト}
+これは TeX Live 2026 の LuaLaTeX で組んだ文書です。和文の行分割や禁則処理、「括弧」の詰めも LuaTeX-ja が行います。
+
+$I_6 = \directlua{wallis(6)}$
+\end{document}
